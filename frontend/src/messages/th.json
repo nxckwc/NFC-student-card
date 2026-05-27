@@ -1,0 +1,25 @@
+{
+  "login": {
+    "badge": "ระบบจัดการบัตรนักเรียน",
+    "title": "ระบบบัตรนักเรียน",
+    "subtitle": "โรงเรียนพรานกระต่ายพิทยาคม",
+    "description": "แดชบอร์ดสำหรับนักเรียนและอาจารย์เพื่อจัดการ ตรวจสอบ แก้ไข บันทึกข้อมูลบัตรนักเรียน โรงเรียนพรานกระต่ายพิทยาคม",
+    "school": {
+      "name": "Prankrataipittayakom",
+      "dashboard": "Students Dashboard"
+    },
+    "form": {
+      "username": "ชื่อผู้ใช้",
+      "password": "รหัสผ่าน",
+      "usernamePlaceholder": "ชื่อผู้ใช้",
+      "passwordPlaceholder": "รหัสผ่าน",
+      "rememberMe": "จดจำฉัน",
+      "submit": "เข้าสู่ระบบ",
+      "submitting": "กำลังเข้าสู่ระบบ..."
+    },
+    "errors": {
+      "invalidCredentials": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"
+    },
+    "success": "PP-ROBOTICS"
+  }
+}

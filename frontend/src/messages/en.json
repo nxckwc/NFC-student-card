@@ -1,0 +1,25 @@
+{
+  "login": {
+    "badge": "Student Card Management System",
+    "title": "Student Card System",
+    "subtitle": "Prankrataipittayakom School",
+    "description": "Dashboard for students and teachers to manage, verify, edit and record student card data at Prankrataipittayakom School.",
+    "school": {
+      "name": "Prankrataipittayakom",
+      "dashboard": "Students Dashboard"
+    },
+    "form": {
+      "username": "Username",
+      "password": "Password",
+      "usernamePlaceholder": "Write your username",
+      "passwordPlaceholder": "Write your password",
+      "rememberMe": "Remember me",
+      "submit": "Sign in",
+      "submitting": "Signing in..."
+    },
+    "errors": {
+      "invalidCredentials": "Invalid username or password"
+    },
+    "success": "PP-ROBOTICS"
+  }
+}
