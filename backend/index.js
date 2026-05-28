@@ -1,6 +1,9 @@
 import express from 'express'
 import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
+import cors from 'cors'
+import { login, register } from './src/controllers/auth.js'
+import 'dotenv/config'
 
 const app = express()
 const port = 3101
@@ -18,12 +21,13 @@ const swaggerOptions = {
             {url: `http://localhost:${port}`}
         ],
     },
-    apis: ['./*.js']
+    apis: ['./*.js', './src/controllers/*.js']
 }
 const swaggerSpec = swaggerJsdoc(swaggerOptions)
 
 
 app.use(express.json())
+app.use(cors({origin: 'http://localhost:3000', credentials: true}))
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 /**
@@ -38,6 +42,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 app.get('/', (req, res) => {
   res.send('Hello World! Access /api-docs to see APi documentation')
 })
+
+app.post('/auth/register', register)
+app.post('/auth/login', login)
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
