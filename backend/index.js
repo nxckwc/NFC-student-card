@@ -36,11 +36,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
  *              description: Everything fine
  */
 app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
-
-app.get('/test', (req, res) => {
-  res.send('Nack likes furry!')
+  res.send('Hello World! Access /api-docs to see APi documentation')
 })
 
 app.listen(port, () => {
