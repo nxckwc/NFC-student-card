@@ -3,7 +3,7 @@ import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
 
 const app = express()
-const port = 3000
+const port = 3101
 
 // Swagger
 const swaggerOptions = {
