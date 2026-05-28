@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken'
  * /auth/register:
  *   post:
  *     summary: Register a new user
+ *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -43,6 +44,10 @@ import jwt from 'jsonwebtoken'
 export const register = async (req, res) => {
   const { username, password } = req.body
 
+  if (!username || !password) return res.status(400).json({message: 'Username and password are required'})
+
+  if (password.length < 6) return res.status(400).json({message: 'Password must be at least 6 characters'})
+
   const exists = await prisma.user.findUnique({ where: { username } })
   if (exists) return res.status(400).json({ message: 'Username already taken' })
 
@@ -61,6 +66,7 @@ export const register = async (req, res) => {
  * /auth/login:
  *   post:
  *     summary: Login with existing user
+ *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -93,6 +99,8 @@ export const register = async (req, res) => {
  */
 export const login = async (req, res) => {
   const { username, password } = req.body
+
+  if (!username || !password) return res.status(400).json({message: 'Username and password are required'})
 
   const user = await prisma.user.findUnique({ where: { username } })
   if (!user) return res.status(401).json({ message: 'Invalid credentials' })
