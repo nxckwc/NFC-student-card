@@ -2,7 +2,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
-import Navbar from "../component/Navbar";
+import Navbar from "../component/Navbar/Navbar";
 import { IBM_Plex_Sans_Thai, IBM_Plex_Sans } from "next/font/google";
 
 const ibmPlexThai = IBM_Plex_Sans_Thai({
