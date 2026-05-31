@@ -3,7 +3,7 @@ import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { IBM_Plex_Sans_Thai, IBM_Plex_Sans } from "next/font/google";
-import Navbar from "./navbar/Navbar";
+import Navbar from "./NavBar/Navbar";
 
 const ibmPlexThai = IBM_Plex_Sans_Thai({
   weight: ['400', '700'],

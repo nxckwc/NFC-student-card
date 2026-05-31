@@ -1,11 +1,22 @@
 'use client'
 import React from 'react'
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import  Link  from 'next/link';
+import { useLocale } from 'next-intl';
 
 const Navbar = () => {
   const pathname = usePathname();
   const isLoginRoute = pathname.endsWith('/login');
+
+  const router = useRouter();
+  const locale = useLocale();
+  
+  const toggleLocale = () => {
+    const newLocale = locale === 'en' ? 'th' : 'en'
+    const newPath = pathname.replace(`/${locale}`, `/${newLocale}`)
+    router.push(newPath)
+  }
+
   return (
     <div className={'fixed top-0 left-0 w-full z-50 backdrop-blur-sm'}>
         <div className={'flex min-h-10 min-w-full items-center justify-between p-2'}>
@@ -23,6 +34,10 @@ const Navbar = () => {
                       Login
                     </button>
                 </Link>}
+              <button className='px-2 py-1 rounded border border-white/20 text-sm'
+                onClick={toggleLocale}>
+                  { locale === 'en' ? 'TH' : 'EN'}
+              </button>
             </div>
         </div>
     </div>
