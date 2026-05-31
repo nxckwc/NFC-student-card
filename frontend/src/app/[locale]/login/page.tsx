@@ -10,7 +10,7 @@ const Background = () => (
 
 export default function LoginPage() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-neutral-950 px-4 py-10 text-neutral-100 sm:px-6 flex">
+    <main className="relative flex-1 overflow-hidden bg-neutral-950 px-4 py-10 text-neutral-100 sm:px-6 flex">
       <Background />
       <div className="relative overflow-hidden mx-auto flex max-w-6xl items-center min-w-[90%]">
         <div className="flex w-full items-center justify-evenly">
