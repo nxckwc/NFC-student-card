@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import { clearAuthCookie, getAuthTokenFromCookies, setAuthCookie } from '../utils/cookie.js'
 
 /**
  * @swagger
@@ -98,7 +99,7 @@ export const register = async (req, res) => {
  *         description: Invalid credentials
  */
 export const login = async (req, res) => {
-  const { username, password } = req.body
+  const { username, password, rememberMe = true } = req.body
 
   if (!username || !password) return res.status(400).json({message: 'Username and password are required'})
 
@@ -114,5 +115,30 @@ export const login = async (req, res) => {
     { expiresIn: '1h' }
   )
 
-  res.json({ token })
+  setAuthCookie(res, token, rememberMe)
+  res.json({ id: user.id, username: user.username })
+}
+
+export const session = async (req, res) => {
+  const token = getAuthTokenFromCookies(req)
+  if (!token) return res.status(401).json({ message: 'Unauthorized' })
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET)
+    res.json({
+      authenticated: true,
+      user: {
+        id: payload.id,
+        username: payload.username
+      }
+    })
+  } catch {
+    clearAuthCookie(res)
+    res.status(401).json({ message: 'Unauthorized' })
+  }
+}
+
+export const logout = async (_req, res) => {
+  clearAuthCookie(res)
+  res.json({ success: true })
 }

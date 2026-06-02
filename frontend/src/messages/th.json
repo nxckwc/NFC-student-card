@@ -14,11 +14,22 @@
       "usernamePlaceholder": "ชื่อผู้ใช้",
       "passwordPlaceholder": "รหัสผ่าน",
       "rememberMe": "จดจำฉัน",
-      "submit": "เข้าสู่ระบบ",
-      "submitting": "กำลังเข้าสู่ระบบ..."
+      "submitSignIn": "เข้าสู่ระบบ",
+      "submitSignUp": "สมัครสมาชิก",
+      "submittingSignIn": "กำลังเข้าสู่ระบบ...",
+      "submittingSignUp": "กำลังสร้างบัญชี...",
+      "signupPrompt": "ยังไม่มีบัญชี?",
+      "signinPrompt": "มีบัญชีอยู่แล้ว?",
+      "switchToSignUp": "สมัครเลย",
+      "switchToSignIn": "เข้าสู่ระบบ",
+      "signupSuccess": "สร้างบัญชีเรียบร้อยแล้ว กรุณาเข้าสู่ระบบ"
     },
     "errors": {
-      "invalidCredentials": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"
+      "invalidCredentials": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
+      "usernameTaken": "ชื่อผู้ใช้นี้ถูกใช้แล้ว",
+      "passwordTooShort": "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร",
+      "requiredFields": "กรุณากรอกชื่อผู้ใช้และรหัสผ่าน",
+      "signupFailed": "ไม่สามารถสร้างบัญชีได้"
     },
     "success": "PP-ROBOTICS"
   }

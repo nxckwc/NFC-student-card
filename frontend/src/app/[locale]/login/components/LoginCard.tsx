@@ -10,14 +10,17 @@ import { useLoginForm } from "../hooks/useLoginForm";
 const LoginCard = () => {
   const t = useTranslations("login");
   const {
+    mode,
     username, setUsername,
     password, setPassword,
     rememberMe, setRememberMe,
     showPassword, setShowPassword,
     errorMessage,
+    noticeMessage,
     isBusy,
     isSuccess,
     handleSubmit,
+    handleToggleMode,
   } = useLoginForm();
 
   return (
@@ -57,16 +60,19 @@ const LoginCard = () => {
             <div className={`${isSuccess ? "opacity-0" : ""} w-full h-full`}>
               <SchoolHeader />
               <LoginForm
+                mode={mode}
                 username={username}
                 password={password}
                 rememberMe={rememberMe}
                 showPassword={showPassword}
                 errorMessage={errorMessage}
+                noticeMessage={noticeMessage}
                 isBusy={isBusy}
                 onUsernameChange={setUsername}
                 onPasswordChange={setPassword}
                 onRememberMeChange={setRememberMe}
                 onTogglePassword={() => setShowPassword((prev) => !prev)}
+                onToggleMode={handleToggleMode}
                 onSubmit={handleSubmit}
               />
             </div>
