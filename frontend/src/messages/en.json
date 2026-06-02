@@ -14,11 +14,22 @@
       "usernamePlaceholder": "Write your username",
       "passwordPlaceholder": "Write your password",
       "rememberMe": "Remember me",
-      "submit": "Sign in",
-      "submitting": "Signing in..."
+      "submitSignIn": "Sign in",
+      "submitSignUp": "Sign up",
+      "submittingSignIn": "Signing in...",
+      "submittingSignUp": "Creating account...",
+      "signupPrompt": "Don't have an account?",
+      "signinPrompt": "Already have an account?",
+      "switchToSignUp": "Create one",
+      "switchToSignIn": "Sign in",
+      "signupSuccess": "Account created successfully. Please sign in."
     },
     "errors": {
-      "invalidCredentials": "Invalid username or password"
+      "invalidCredentials": "Invalid username or password",
+      "usernameTaken": "Username already taken",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "requiredFields": "Username and password are required",
+      "signupFailed": "Could not create account"
     },
     "success": "PP-ROBOTICS"
   }
