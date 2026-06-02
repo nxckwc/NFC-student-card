@@ -24,8 +24,8 @@ const swaggerOptions = {
     },
     apis: ['./*.js', './src/controllers/*.js']
 }
-const swaggerSpec = swaggerJsdoc(swaggerOptions)
 
+const swaggerSpec = swaggerJsdoc(swaggerOptions)
 
 app.use(express.json())
 
