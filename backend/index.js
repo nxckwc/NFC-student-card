@@ -6,7 +6,7 @@ import { login, logout, register, session } from './src/controllers/auth.js'
 import 'dotenv/config'
 
 const app = express()
-const port = 3101
+const port = 3100
 const frontendOrigin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:3000'
 
 // Swagger
