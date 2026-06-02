@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { IBM_Plex_Sans_Thai, IBM_Plex_Sans } from "next/font/google";
 import Navbar from "./NavBar/Navbar";
+import AuthGuard from "./AuthGuard";
 
 const ibmPlexThai = IBM_Plex_Sans_Thai({
   weight: ['400', '700'],
@@ -26,7 +27,7 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
 
-  if (!routing.locales.includes(locale as any)) {
+  if (!routing.locales.includes(locale as (typeof routing.locales)[number])) {
     notFound();
   }
 
@@ -35,10 +36,12 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <div className={`flex min-h-screen min-w-screen flex-col ${fontClass}`}>
-        <Navbar />
-        {children}
-      </div>
+      <AuthGuard locale={locale}>
+        <div className={`flex min-h-screen min-w-screen flex-col ${fontClass}`}>
+          <Navbar />
+          {children}
+        </div>
+      </AuthGuard>
       
     </NextIntlClientProvider>
   );
