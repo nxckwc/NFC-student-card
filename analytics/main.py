@@ -89,3 +89,9 @@ def download_student_csv(student_id: str):
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={file_name}"}
     )
+
+@app.get("/api/students")
+def get_all_students():
+    query = 'SELECT id, "firstName", "lastName" FROM "Student" ORDER BY "lastName" ASC'
+    df = pd.read_sql_query(query, engine)
+    return JSONResponse(content=df.to_dict(orient="records"))
