@@ -78,7 +78,6 @@ export const getStudent = async (req, res) => {
 		if (!student) return res.status(404).json({ error: 'Student not found'})
 		res.json(student)
 	} catch (error) {
-		console.log(error)
 		res.status(500).json({ error: 'Internal error' })
 	}
 }
@@ -114,7 +113,6 @@ export const getStudentByCard = async (req, res) => {
 		if (!student) return res.status(404).json({ error: 'Student not found'})
 		res.json(student)
 	} catch (error) {
-		console.log(error)
 		res.status(500).json({ error: 'Internal error' })
 	}
 }
