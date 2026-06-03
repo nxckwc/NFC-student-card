@@ -31,13 +31,13 @@ def get_student_logs(student_id: str) -> pd.DataFrame:
         raise HTTPException(status_code=404, detail="Student not found")
     return df
 
-@app.get("/api/reports/student/{student_id}/history")
+@app.get("/analytics/reports/student/{student_id}/history")
 def get_student_history(student_id: str):
     df = get_student_logs(student_id)
     df['timestamp'] = df['timestamp'].dt.isoformat()
     return JSONResponse(content=df.to_dict(orient="records"))
 
-@app.get("/api/reports/student/{student_id}/analysis")
+@app.get("/analytics/reports/student/{student_id}/analysis")
 def get_student_analysis(student_id: str):
     df = get_student_logs(student_id)
     
@@ -70,7 +70,7 @@ def get_student_analysis(student_id: str):
     
     return JSONResponse(content=analysis)
 
-@app.get("/api/reports/student/{student_id}/csv")
+@app.get("/analytics/reports/student/{student_id}/csv")
 def download_student_csv(student_id: str):
     df = get_student_logs(student_id)
     
@@ -90,7 +90,7 @@ def download_student_csv(student_id: str):
         headers={"Content-Disposition": f"attachment; filename={file_name}"}
     )
 
-@app.get("/api/students")
+@app.get("/analytics/students")
 def get_all_students():
     query = 'SELECT id, "firstName", "lastName" FROM "Student" ORDER BY "lastName" ASC'
     df = pd.read_sql_query(query, engine)
