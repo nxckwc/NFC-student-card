@@ -1,4 +1,4 @@
-import { prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma.js";
 
 /**
  * @swagger
@@ -63,29 +63,11 @@ export const createStudent = async (req, res) => {
  *     responses:
  *       200:
  *         description: Student found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: string
- *                   example: 550e8400-e29b-41d4-a716-446655440000
- *                 firstName:
- *                   type: string
- *                   example: Juan
- *                 lastName:
- *                   type: string
- *                   example: García
- *                 uid_card:
- *                   type: string
- *                   example: f47ac10b-58cc-4372-a567-0e02b2c3d479
  *       404:
  *         description: Student not found
  *       500:
  *         description: Internal error
  */
-
 export const getStudent = async (req, res) => {
 	try {
 		const { studentId } = req.params;
@@ -96,6 +78,7 @@ export const getStudent = async (req, res) => {
 		if (!student) return res.status(404).json({ error: 'Student not found'})
 		res.json(student)
 	} catch (error) {
+		console.log(error)
 		res.status(500).json({ error: 'Internal error' })
 	}
 }
@@ -131,6 +114,7 @@ export const getStudentByCard = async (req, res) => {
 		if (!student) return res.status(404).json({ error: 'Student not found'})
 		res.json(student)
 	} catch (error) {
+		console.log(error)
 		res.status(500).json({ error: 'Internal error' })
 	}
 }
