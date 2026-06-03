@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma.js";
-
+console.log('Prisma:', prisma)
 /**
  * @swagger
  * /student:
