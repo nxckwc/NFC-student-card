@@ -4,6 +4,7 @@ import swaggerJsdoc from 'swagger-jsdoc'
 import cors from 'cors'
 import { login, logout, register, session } from './src/controllers/auth.js'
 import 'dotenv/config'
+import { createStudent, getStudent, getStudentByCard } from './src/controllers/student.js'
 
 const app = express()
 const port = 3100
@@ -52,6 +53,10 @@ app.post('/auth/register', register)
 app.post('/auth/login', login)
 app.get('/auth/session', session)
 app.post('/auth/logout', logout)
+
+app.post('/student', createStudent);
+app.get('/student/card/:studentCardId', getStudentByCard);
+app.get('/student/:studentId', getStudent);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
