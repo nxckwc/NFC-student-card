@@ -11,8 +11,8 @@ const port = 3100
 const frontendOrigin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:3000'
 
 // Swagger
-const swaggerOptions = {
-    definition : {
+const swaggerOptions: swaggerJsdoc.Options = {
+    definition: {
         openapi: '3.0.0',
         info: {
             title: 'Nack API',
@@ -20,10 +20,10 @@ const swaggerOptions = {
             description: 'Documentation for Nack :D',
         },
         servers: [
-            {url: `http://localhost:${port}`}
+            { url: `http://localhost:${port}` }
         ],
     },
-    apis: ['./*.js', './src/controllers/*.js']
+    apis: ['./*.ts', './src/controllers/*.ts']
 }
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions)
@@ -45,8 +45,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
  *          200:
  *              description: Everything fine
  */
-app.get('/', (req, res) => {
-  res.send('Hello World! Access /api-docs to see APi documentation')
+app.get('/', (_req, res) => {
+  res.send('Hello World! Access /api-docs to see API documentation')
 })
 
 app.post('/auth/register', register)
@@ -54,9 +54,9 @@ app.post('/auth/login', login)
 app.get('/auth/session', session)
 app.post('/auth/logout', logout)
 
-app.post('/student', createStudent);
-app.get('/student/card/:studentCardId', getStudentByCard);
-app.get('/student/:studentId', getStudent);
+app.post('/student', createStudent)
+app.get('/student/card/:studentCardId', getStudentByCard)
+app.get('/student/:studentId', getStudent)
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)

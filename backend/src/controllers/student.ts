@@ -1,5 +1,7 @@
-import { prisma } from "../lib/prisma.js";
-console.log('Prisma:', prisma)
+import type { Request, Response } from 'express'
+import { prisma } from '../lib/prisma.js'
+import type { CreateStudentRequestBody } from '../interfaces/student.js'
+
 /**
  * @swagger
  * /student:
@@ -30,21 +32,25 @@ console.log('Prisma:', prisma)
  *       500:
  *         description: Internal error
  */
-export const createStudent = async (req, res) => {
-	try {
-		const { firstName, lastName } = req.body;
+export const createStudent = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { firstName, lastName } = req.body as CreateStudentRequestBody
 
-		if (!firstName || !lastName ) return res.status(400).json({ error: 'Missing data about student'})
-		const student = await prisma.student.create({
-			data: {
-				firstName, 
-				lastName
-			}
-		})
-		res.status(201).json(student)
-	} catch (error) {
-		res.status(500).json({ error: 'Internal error' })
-	}
+    if (!firstName || !lastName) {
+      res.status(400).json({ error: 'Missing data about student' })
+      return
+    }
+
+    const student = await prisma.student.create({
+      data: {
+        firstName,
+        lastName
+      }
+    })
+    res.status(201).json(student)
+  } catch {
+    res.status(500).json({ error: 'Internal error' })
+  }
 }
 
 /**
@@ -68,18 +74,21 @@ export const createStudent = async (req, res) => {
  *       500:
  *         description: Internal error
  */
-export const getStudent = async (req, res) => {
-	try {
-		const { studentId } = req.params;
+export const getStudent = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { studentId } = req.params as Record<string, string>
 
-		const student = await prisma.student.findUnique({
-			where: { id: studentId }
-		})
-		if (!student) return res.status(404).json({ error: 'Student not found'})
-		res.json(student)
-	} catch (error) {
-		res.status(500).json({ error: 'Internal error' })
-	}
+    const student = await prisma.student.findUnique({
+      where: { id: studentId }
+    })
+    if (!student) {
+      res.status(404).json({ error: 'Student not found' })
+      return
+    }
+    res.json(student)
+  } catch {
+    res.status(500).json({ error: 'Internal error' })
+  }
 }
 
 /**
@@ -103,16 +112,19 @@ export const getStudent = async (req, res) => {
  *       500:
  *         description: Internal error
  */
-export const getStudentByCard = async (req, res) => {
-		try {
-		const { studentCardId } = req.params;
+export const getStudentByCard = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { studentCardId } = req.params as Record<string, string>
 
-		const student = await prisma.student.findUnique({
-			where: { uid_card: studentCardId }
-		})
-		if (!student) return res.status(404).json({ error: 'Student not found'})
-		res.json(student)
-	} catch (error) {
-		res.status(500).json({ error: 'Internal error' })
-	}
+    const student = await prisma.student.findUnique({
+      where: { uid_card: studentCardId }
+    })
+    if (!student) {
+      res.status(404).json({ error: 'Student not found' })
+      return
+    }
+    res.json(student)
+  } catch {
+    res.status(500).json({ error: 'Internal error' })
+  }
 }

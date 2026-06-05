@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import axios from "axios";
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3101").replace(/\/+$/, "");
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3100").replace(/\/+$/, "");
 type AuthMode = "login" | "signup";
 
 
