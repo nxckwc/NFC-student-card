@@ -1,7 +1,10 @@
+import type { Request, Response } from 'express'
 import { prisma } from '../lib/prisma.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { clearAuthCookie, getAuthTokenFromCookies, setAuthCookie } from '../utils/cookie.js'
+
+import type { AuthRequestBody, JwtPayload } from '../interfaces/auth.js'
 
 /**
  * @swagger
@@ -42,15 +45,24 @@ import { clearAuthCookie, getAuthTokenFromCookies, setAuthCookie } from '../util
  *       400:
  *         description: Username already taken
  */
-export const register = async (req, res) => {
-  const { username, password } = req.body
+export const register = async (req: Request, res: Response): Promise<void> => {
+  const { username, password } = req.body as AuthRequestBody
 
-  if (!username || !password) return res.status(400).json({message: 'Username and password are required'})
+  if (!username || !password) {
+    res.status(400).json({ message: 'Username and password are required' })
+    return
+  }
 
-  if (password.length < 6) return res.status(400).json({message: 'Password must be at least 6 characters'})
+  if (password.length < 6) {
+    res.status(400).json({ message: 'Password must be at least 6 characters' })
+    return
+  }
 
   const exists = await prisma.user.findUnique({ where: { username } })
-  if (exists) return res.status(400).json({ message: 'Username already taken' })
+  if (exists) {
+    res.status(400).json({ message: 'Username already taken' })
+    return
+  }
 
   const hashed = await bcrypt.hash(password, 10)
 
@@ -98,20 +110,32 @@ export const register = async (req, res) => {
  *       401:
  *         description: Invalid credentials
  */
-export const login = async (req, res) => {
-  const { username, password, rememberMe = true } = req.body
+export const login = async (req: Request, res: Response): Promise<void> => {
+  const { username, password, rememberMe = true } = req.body as AuthRequestBody
 
-  if (!username || !password) return res.status(400).json({message: 'Username and password are required'})
+  if (!username || !password) {
+    res.status(400).json({ message: 'Username and password are required' })
+    return
+  }
 
   const user = await prisma.user.findUnique({ where: { username } })
-  if (!user) return res.status(401).json({ message: 'Invalid credentials' })
+  if (!user) {
+    res.status(401).json({ message: 'Invalid credentials' })
+    return
+  }
 
   const valid = await bcrypt.compare(password, user.password)
-  if (!valid) return res.status(401).json({ message: 'Invalid credentials' })
+  if (!valid) {
+    res.status(401).json({ message: 'Invalid credentials' })
+    return
+  }
+
+  const secret = process.env['JWT_SECRET']
+  if (!secret) throw new Error('JWT_SECRET is not defined')
 
   const token = jwt.sign(
     { id: user.id, username: user.username },
-    process.env.JWT_SECRET,
+    secret,
     { expiresIn: '1h' }
   )
 
@@ -119,12 +143,18 @@ export const login = async (req, res) => {
   res.json({ id: user.id, username: user.username })
 }
 
-export const session = async (req, res) => {
+export const session = async (req: Request, res: Response): Promise<void> => {
   const token = getAuthTokenFromCookies(req)
-  if (!token) return res.status(401).json({ message: 'Unauthorized' })
+  if (!token) {
+    res.status(401).json({ message: 'Unauthorized' })
+    return
+  }
+
+  const secret = process.env['JWT_SECRET']
+  if (!secret) throw new Error('JWT_SECRET is not defined')
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET)
+    const payload = jwt.verify(token, secret) as JwtPayload
     res.json({
       authenticated: true,
       user: {
@@ -138,7 +168,7 @@ export const session = async (req, res) => {
   }
 }
 
-export const logout = async (_req, res) => {
+export const logout = async (_req: Request, res: Response): Promise<void> => {
   clearAuthCookie(res)
   res.json({ success: true })
 }
