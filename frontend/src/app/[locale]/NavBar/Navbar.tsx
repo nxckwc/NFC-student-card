@@ -28,13 +28,7 @@ const Navbar = () => {
                 <Link href="/about" className={'w-fit p-1 cursor-pointer hover:underline transition duration-300'}>About</Link>
                 <Link href="/contact" className={'w-fit p-1 cursor-pointer hover:underline transition duration-300'}>Contact</Link>
               </div>
-              {!isLoginRoute && <Link href="/login">
-                    <button 
-                      className={'w-fit h-fit flex items-center justify-center bg-red-500 p-2 rounded-md font-bold cursor-pointer text-white hover:scale-105 transition duration-300'} 
-                    >
-                      Login
-                    </button>
-                </Link>}
+              
               <button className='px-3 py-1 rounded-2xl border border-white/20 text-sm flex items-center justify-center cursor-pointer hover:bg-white hover:text-black transition duration-300'
                 onClick={toggleLocale}>
                   { locale === 'en' ? 'EN' : 'TH'}
