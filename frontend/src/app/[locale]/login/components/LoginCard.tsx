@@ -27,7 +27,7 @@ const LoginCard = () => {
   const router = useRouter();
   const { locale } = useParams();
   useEffect(() => {
-    if (isSuccess) setTimeout(() => router.push(`/${locale}/dashboard`), 1500);
+    if (isSuccess) setTimeout(() => router.push(`/${locale}/dashboard`), 800);
   }, [isSuccess, locale, router]);
   return (
     <motion.section
