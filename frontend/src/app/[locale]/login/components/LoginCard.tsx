@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 import SchoolHeader from "./SchoolHeader";
 import LoginForm from "./LoginForm";
 import { useLoginForm } from "../hooks/useLoginForm";
+import {useEffect} from "react";
+import {useParams, useRouter} from "next/navigation";
 
 const LoginCard = () => {
   const t = useTranslations("login");
@@ -22,7 +24,11 @@ const LoginCard = () => {
     handleSubmit,
     handleToggleMode,
   } = useLoginForm();
-
+  const router = useRouter();
+  const { locale } = useParams();
+  useEffect(() => {
+    if (isSuccess) setTimeout(() => router.push(`/${locale}/dashboard`), 800);
+  }, [isSuccess, locale, router]);
   return (
     <motion.section
       animate={{ opacity: 1, scale: 1, y: 0 }}

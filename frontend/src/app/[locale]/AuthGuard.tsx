@@ -31,7 +31,7 @@ const AuthGuard = ({ locale, children }: AuthGuardProps) => {
 
         if (isLoginRoute) {
           setIsAllowed(false);
-          router.replace(`/${locale}`);
+          router.replace(`/${locale}/dashboard`);
           return;
         }
 
