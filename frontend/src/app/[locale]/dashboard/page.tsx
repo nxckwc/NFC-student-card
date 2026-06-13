@@ -28,8 +28,8 @@ const Dashboard = () => {
     return (
         <main className={'flex min-h-screen bg-[#1a1a1a] pt-15 flex-col overflow-auto'}>
             <div className={'flex flex-col gap-4'}>
-                <div className={'flex flex-col gap-6 min-w-screen p-2'}>
-                    <div className={' border-b-2 border-gray-200/50 max-h-fit py-2 flex justify-center items-center'}>
+                <div className={'flex flex-col lg:flex-row-reverse lg:mt-4 gap-6 min-w-screen p-2 lg:items-center lg:justify-evenly'}>
+                    <div className={' max-lg:border-b-2 border-gray-200/50 max-h-fit py-2 flex justify-center items-center'}>
                         <div className={'text-white min-w-100 flex flex-row justify-evenly '}>
                             <PersonAccounts24Filled className="size-23" />
                             <div className={'min-w-fit flex flex-col items-start gap-2 justify-center'}>
@@ -41,17 +41,17 @@ const Dashboard = () => {
                             </div>
                         </div>
                     </div>
-                    <div className={'overflow-x-auto flex flex-row gap-4 snap-x snap-mandatory pb-2'}>
-                        <div className={'min-h-50 min-w-[80%] shrink-0 bg-[#3C3C3C]/30 rounded-md snap-center'}>
+                    <div className={'overflow-x-auto flex flex-row gap-4 snap-x snap-mandatory pb-2 w-full scrollbar-track-transparent scrollbar-thumb-gray-500/50 scrollbar-thumb-width-2'}>
+                        <div className={'min-h-50 max-w-100 w-full shrink-0 bg-[#3C3C3C]/30 rounded-md snap-center'}>
                         
                         </div>
-                        <div ref={currentCardRef} className={'min-h-50 min-w-[80%] shrink-0 bg-[#3C3C3C] rounded-md snap-center'}>
+                        <div ref={currentCardRef} className={'min-h-50  max-w-100 w-full shrink-0 bg-[#3C3C3C] rounded-md snap-center'}>
                         
                         </div>
-                        <div className={'min-h-50 min-w-[80%] shrink-0 bg-[#3C3C3C]/30 rounded-md snap-center'}>
+                        <div className={'min-h-50  max-w-100 w-full shrink-0 bg-[#3C3C3C]/30 rounded-md snap-center'}>
                         
                         </div>
-                        <div className={'min-h-50 min-w-[80%] shrink-0 bg-[#3C3C3C]/30 rounded-md snap-center'}>
+                        <div className={'min-h-50  max-w-100 w-full shrink-0 bg-[#3C3C3C]/30 rounded-md snap-center'}>
                         
                         </div>
                     </div>
