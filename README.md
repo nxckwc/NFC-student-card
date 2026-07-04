@@ -64,6 +64,7 @@ This project provides a comprehensive solution for managing student identificati
 ##  Features in Development
 
 - [ ] Mobile app (React Native)
+- [x] Web dashboard (Tailwindcss)
 - [ ] reporting and analytics
 - [ ] Automated notifications
 - [x] Multi-language support (partial: next-intl)
