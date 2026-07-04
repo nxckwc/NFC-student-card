@@ -16,10 +16,16 @@ const AuthGuard = ({ locale, children }: AuthGuardProps) => {
   const router = useRouter();
   const [isAllowed, setIsAllowed] = useState(false);
 
+  const PublicRoute = ["/", "/about", "/docs", "/contact"];
+
   useEffect(() => {
     let isActive = true;
 
     const isLoginRoute = pathname === `/${locale}/login`;
+
+    const isPublicRoute = PublicRoute.includes(
+        pathname.replace(new RegExp(`^/${locale}`), "") || "/"
+    );
 
     const verifySession = async () => {
       try {
@@ -39,7 +45,7 @@ const AuthGuard = ({ locale, children }: AuthGuardProps) => {
       } catch {
         if (!isActive) return;
 
-        if (isLoginRoute) {
+        if (isLoginRoute || isPublicRoute) {
           setIsAllowed(true);
           return;
         }
