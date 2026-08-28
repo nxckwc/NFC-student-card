@@ -1,4 +1,47 @@
 {
+  "nav": {
+    "home": "School dashboard home",
+    "school": "Prankrataipittayakom",
+    "product": "Student attendance",
+    "overview": "Overview",
+    "schedule": "Schedule",
+    "reports": "Reports",
+    "language": "Switch language"
+  },
+  "dashboard": {
+    "workspace": "Schedule workspace",
+    "welcome": "Welcome back, {username}",
+    "today": "{date}",
+    "weeklySchedule": "Weekly schedule",
+    "periodCount": "{count} of 7 periods",
+    "selectDay": "Select a weekday",
+    "loading": "Loading schedule",
+    "loadError": "Unable to load your schedule. Please try again.",
+    "retry": "Retry",
+    "noPeriods": "No periods are scheduled for {day}.",
+    "class": "Class {name}",
+    "room": "Room {id}",
+    "current": "Current",
+    "inProgress": "currently in progress",
+    "unavailable": "unavailable",
+    "insights": "Insights",
+    "reports": "Reports",
+    "days": {
+      "1": { "short": "Mon", "full": "Monday" },
+      "2": { "short": "Tue", "full": "Tuesday" },
+      "3": { "short": "Wed", "full": "Wednesday" },
+      "4": { "short": "Thu", "full": "Thursday" },
+      "5": { "short": "Fri", "full": "Friday" },
+      "6": { "short": "Sat", "full": "Saturday" },
+      "7": { "short": "Sun", "full": "Sunday" }
+    },
+    "reportItems": {
+      "arrival": { "label": "Gate arrival", "description": "Daily entry and late tracking" },
+      "student": { "label": "Student report", "description": "Attendance per student" },
+      "class": { "label": "Class report", "description": "Attendance by classroom" },
+      "subject": { "label": "Subject report", "description": "Attendance by subject" }
+    }
+  },
   "login": {
     "badge": "Student Card Management System",
     "title": "Student Card System",

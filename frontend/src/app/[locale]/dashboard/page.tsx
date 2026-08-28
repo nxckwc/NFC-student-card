@@ -1,145 +1,212 @@
 "use client"
 
-import React, { useRef, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import axios from 'axios'
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
+import { useLocale, useTranslations } from 'next-intl'
 import {
-    PersonAccounts24Filled,
-    DoorArrowLeft24Regular,
-    PersonAccounts24Regular,
-    DataHistogram24Regular,
-    BookOpen24Regular,
-    ChevronRight20Regular,
-} from '@fluentui/react-icons';
+  BookOpen24Regular,
+  ChevronRight20Regular,
+  DataHistogram24Regular,
+  DoorArrowLeft24Regular,
+  PersonAccounts24Filled,
+  PersonAccounts24Regular,
+} from '@fluentui/react-icons'
+import { AlertCircle, CalendarDays, Clock3, MapPin, RefreshCw } from 'lucide-react'
 
-const Dashboard = () => {
-    const currentCardRef = useRef<HTMLDivElement>(null);
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100').replace(/\/+$/, '')
 
-    useEffect(() => {
-        currentCardRef.current?.scrollIntoView({
-            behavior: 'smooth',
-            inline: 'center',
-            block: 'nearest',
-        });
-    }, []);
+const days = [1, 2, 3, 4, 5, 6, 7]
 
-    const todaySchedule = [
-        { period: 1, time: "08:30 - 09:20", subject: "English", classroom: "5/1", status: "Completed", state: "done" },
-        { period: 3, time: "10:25 - 11:15", subject: "English", classroom: "6/2", status: "Ready for attendance", state: "current" },
-        { period: 6, time: "14:00 - 14:50", subject: "English", classroom: "4/3", status: "Upcoming", state: "upcoming" },
-        { period: 8, time: "14:55 - 15:40", subject: "English", classroom: "4/2", status: "Upcoming", state: "upcoming" },
-    ];
+interface ScheduleEntry {
+  id: number
+  weekday: number
+  period: number
+  subject: string
+  className: string
+  roomId: string
+  startTime: string
+  endTime: string
+}
 
-    const reportScopes = [
-        { id: 'arrival', label: 'Gate arrival', desc: 'Daily entry & late tracking', icon: <DoorArrowLeft24Regular className="size-5" /> },
-        { id: 'student', label: 'Student report', desc: 'Attendance per student', icon: <PersonAccounts24Regular className="size-5" /> },
-        { id: 'class', label: 'Class report', desc: 'Attendance by classroom', icon: <DataHistogram24Regular className="size-5" /> },
-        { id: 'subject', label: 'Subject report', desc: 'Attendance by subject', icon: <BookOpen24Regular className="size-5" /> },
-    ];
+interface SessionResponse {
+  user: { username: string }
+}
 
-    const handleScopeSelect = (scopeId: string) => {
-        console.log('selected scope:', scopeId);
-    };
+const getDashboardData = async (): Promise<{ schedule: ScheduleEntry[]; username: string }> => {
+  const [scheduleResponse, sessionResponse] = await Promise.all([
+    axios.get<{ schedule: ScheduleEntry[] }>(`${API_BASE_URL}/dashboard/schedule`, { withCredentials: true }),
+    axios.get<SessionResponse>(`${API_BASE_URL}/auth/session`, { withCredentials: true }),
+  ])
 
-    return (
-        <main className="flex min-h-screen flex-col bg-[#161616] pt-17 gap-5 p-2">
+  return {
+    schedule: scheduleResponse.data.schedule,
+    username: sessionResponse.data.user.username,
+  }
+}
 
-            {/* Profile */}
-            <div className="flex items-center gap-3 bg-[#1f1f1f] border border-white/8 rounded-3xl px-4 py-4">
-                <div className="w-12 h-12 rounded-full bg-[#2c2c2c] flex items-center justify-center shrink-0">
-                    <PersonAccounts24Filled className="size-5 text-white/55" />
-                </div>
-                <div>
-                    <div className="text-[15px] font-medium text-white">Wanchai Maidaeng</div>
-                    <div className="text-[11px] text-white/35 mt-0.5 tracking-wide">Teacher</div>
-                </div>
-                <div className="ml-auto text-right">
-                    <div className="text-[10px] text-white/30 tracking-widest mb-1 uppercase">Homeroom</div>
-                    <div className="inline-block text-base font-medium text-white leading-none bg-[#2c2c2c] rounded-full px-3 py-1.5">5/1</div>
-                </div>
+const reportScopes = [
+  { id: 'arrival', icon: <DoorArrowLeft24Regular className="size-5" />, color: 'bg-[#f9e8e4] text-[#a95047]' },
+  { id: 'student', icon: <PersonAccounts24Regular className="size-5" />, color: 'bg-[#deece4] text-[#356b5c]' },
+  { id: 'class', icon: <DataHistogram24Regular className="size-5" />, color: 'bg-[#e0ecf3] text-[#426778]' },
+  { id: 'subject', icon: <BookOpen24Regular className="size-5" />, color: 'bg-[#f4edcf] text-[#7a682d]' },
+]
+
+const currentWeekday = (): number => {
+  const day = new Date().getDay()
+  return day === 0 ? 7 : day
+}
+
+const toMinutes = (time: string): number => {
+  const [hours, minutes] = time.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+function DashboardContent() {
+  const locale = useLocale()
+  const t = useTranslations('dashboard')
+  const [selectedDay, setSelectedDay] = useState(currentWeekday)
+  const [currentTime, setCurrentTime] = useState(() => new Date())
+  const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null)
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: ['dashboard-schedule'],
+    queryFn: getDashboardData,
+  })
+
+  const selectedLessons = (data?.schedule ?? []).filter((entry) => entry.weekday === selectedDay)
+  const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes()
+  const selectedDayLabel = t(`days.${selectedDay}.full`)
+  const dateLabel = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long' }).format(currentTime)
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setCurrentTime(new Date()), 60_000)
+    return () => window.clearInterval(intervalId)
+  }, [])
+
+  const isCurrentLesson = (lesson: ScheduleEntry): boolean => (
+    selectedDay === currentWeekday()
+    && currentMinutes >= toMinutes(lesson.startTime)
+    && currentMinutes < toMinutes(lesson.endTime)
+  )
+
+  return (
+    <main className="relative min-h-screen bg-[#f4f7f3] px-4 pb-14 pt-24 text-[#26332e] sm:px-6 lg:px-8">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgba(112,139,122,0.16)_1px,transparent_1px)] bg-size-[24px_24px]" />
+      <div className="relative mx-auto max-w-7xl">
+        <section className="mb-10 flex flex-col gap-5 border-b border-[#dce5de] pb-8 sm:flex-row sm:items-end sm:justify-between" aria-labelledby="dashboard-title">
+          <div className="flex items-center gap-3">
+            <div className="relative flex size-12 shrink-0 items-center justify-center rounded-lg bg-[#deece4] text-[#356b5c]">
+              <PersonAccounts24Filled className="size-6" />
+              <span className="absolute -right-1 -top-1 size-3 rotate-12 rounded-sm bg-[#e47769]" />
             </div>
-
-            {/* Schedule */}
             <div>
-                <div className="flex justify-between items-center mb-3 px-1">
-                    <span className="text-[11px] font-medium text-white/35 uppercase tracking-widest">Schedule</span>
-                    <span className="text-[11px] text-white/25">4 periods</span>
-                </div>
-                <div className="flex gap-3 overflow-x-auto px-1 pb-2 scrollbar-none snap-x">
-                    {todaySchedule.map((lesson) => {
-                        const isCurrent = lesson.state === 'current';
-                        const isDone = lesson.state === 'done';
-                        return (
-                            <div
-                                key={lesson.period}
-                                ref={isCurrent ? currentCardRef : null}
-                                className={`relative min-h-48 max-w-64 w-full shrink-0 rounded-3xl snap-center p-5 flex flex-col justify-between border
-                                    ${isCurrent
-                                    ? 'bg-[#2c2c2c] border-white/20'
-                                    : 'bg-[#1f1f1f] border-white/8'}
-                                    ${isDone ? 'opacity-50' : ''}
-                                `}
-                            >
-                                <div className="flex justify-between items-start">
-                                    <span className={`text-[11px] font-medium uppercase tracking-widest ${isCurrent ? 'text-white/70' : 'text-white/40'}`}>
-                                        Period {lesson.period}
-                                    </span>
-                                    <span className={`text-[12px] tabular-nums ${isCurrent ? 'text-white/50' : 'text-white/30'}`}>
-                                        {lesson.time}
-                                    </span>
-                                </div>
-
-                                <div>
-                                    <div className="text-2xl font-medium text-white tracking-tight">
-                                        {lesson.subject}
-                                    </div>
-                                    <div className={`text-[14px] mt-0.5 ${isCurrent ? 'text-white/65' : 'text-white/45'}`}>
-                                        Class {lesson.classroom}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    {isCurrent ? (
-                                        <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-white bg-[#161616] rounded-full px-2.5 py-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                                            {lesson.status}
-                                        </span>
-                                    ) : (
-                                        <span className="text-[12px] text-white/30">
-                                            {lesson.status}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+              <p className="text-xs font-semibold text-[#748078]">{t('workspace')}</p>
+              <h1 id="dashboard-title" className="text-2xl font-bold text-[#26332e]">{t('welcome', { username: data?.username ?? 'Admin' })}</h1>
             </div>
+          </div>
+          <p className="text-sm font-medium text-[#748078]">{t('today', { date: dateLabel })}</p>
+        </section>
 
-            {/* Reports */}
+        <section id="schedule" className="scroll-mt-24" aria-labelledby="schedule-title">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div>
-                <div className="mb-3 px-1">
-                    <span className="text-[11px] font-medium text-white/35 uppercase tracking-widest">Reports</span>
-                </div>
-
-                <div className="flex flex-col gap-2.5">
-                    {reportScopes.map((scope) => (
-                        <button
-                            key={scope.id}
-                            onClick={() => handleScopeSelect(scope.id)}
-                            className="group w-full flex items-center gap-3.5 bg-[#1f1f1f] border border-white/8 rounded-2xl px-4 py-3.5 active:bg-[#2c2c2c] active:border-white/20 transition-colors"
-                        >
-                            <div className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 bg-[#2c2c2c] text-white/55">
-                                {scope.icon}
-                            </div>
-                            <div className="flex-1 text-left">
-                                <div className="text-[14px] font-medium text-white/85">{scope.label}</div>
-                                <div className="text-[12px] text-white/30 mt-0.5">{scope.desc}</div>
-                            </div>
-                            <ChevronRight20Regular className="size-4 text-white/20 shrink-0" />
-                        </button>
-                    ))}
-                </div>
+              <p className="mb-1 flex items-center gap-2 text-xs font-bold uppercase text-[#d05f54]"><CalendarDays className="size-4" /> {t('weeklySchedule')}</p>
+              <h2 id="schedule-title" className="text-2xl font-bold text-[#26332e]">{selectedDayLabel}</h2>
             </div>
+            <span className="text-sm text-[#748078]">{t('periodCount', { count: selectedLessons.length })}</span>
+          </div>
 
-        </main>
-    )}
-export default Dashboard
+          <div className="mb-5 grid grid-cols-7 gap-1 rounded-lg border border-[#dce5de] bg-white/80 p-1 shadow-[0_4px_18px_rgba(52,76,61,0.04)]" role="tablist" aria-label={t('selectDay')}>
+            {days.map((day) => (
+              <button
+                key={day}
+                type="button"
+                role="tab"
+                aria-selected={selectedDay === day}
+                className={`min-w-0 rounded-md px-1 py-2.5 text-xs font-bold transition sm:px-3 sm:text-sm ${selectedDay === day ? 'bg-[#3f7565] text-white shadow-sm' : 'text-[#69766e] hover:bg-[#edf3ef]'}`}
+                onClick={() => setSelectedDay(day)}
+              >
+                {t(`days.${day}.short`)}
+              </button>
+            ))}
+          </div>
+
+          {isLoading ? (
+            <div className="schedule-rail flex snap-x gap-3 overflow-x-auto pb-4" aria-label={t('loading')}>
+              {Array.from({ length: 7 }, (_, index) => <div key={index} className="skeleton h-48 w-72 shrink-0 snap-start rounded-lg" />)}
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-start gap-3 rounded-lg border border-[#e8bcb6] bg-[#fff8f6] p-5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="flex items-center gap-2 text-sm font-medium text-[#99483f]"><AlertCircle className="size-5" />{t('loadError')}</p>
+              <button type="button" className="inline-flex items-center gap-2 rounded-md bg-[#d8675c] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b85349]" onClick={() => void refetch()}><RefreshCw className="size-4" />{t('retry')}</button>
+            </div>
+          ) : selectedLessons.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-[#c8d5cc] bg-white/70 px-5 py-12 text-center text-sm text-[#748078]">{t('noPeriods', { day: selectedDayLabel })}</div>
+          ) : (
+            <div className="schedule-rail flex snap-x gap-3 overflow-x-auto pb-4" aria-label={`${selectedDayLabel} ${t('weeklySchedule')}`}>
+              {selectedLessons.map((lesson) => {
+                const isCurrent = isCurrentLesson(lesson)
+                const isSelected = selectedLessonId === lesson.id
+
+                return (
+                <button
+                  key={lesson.id}
+                  type="button"
+                  disabled={!isCurrent}
+                  aria-pressed={isSelected}
+                  aria-label={`Period ${lesson.period}: ${lesson.subject}, ${isCurrent ? t('inProgress') : t('unavailable')}`}
+                  onClick={() => setSelectedLessonId(lesson.id)}
+                  className={`relative flex min-h-52 w-72 shrink-0 snap-start flex-col overflow-hidden rounded-lg border p-5 text-left transition ${isCurrent ? `border-[#8db7a2] bg-white shadow-[0_10px_28px_rgba(52,92,70,0.1)] ${isSelected ? 'ring-2 ring-[#3f7565] ring-offset-2 ring-offset-[#f4f7f3]' : 'hover:border-[#5f927e]'}` : 'cursor-not-allowed border-[#dce5de] bg-[#e9eeea] opacity-60 grayscale'}`}
+                >
+                  <span className={`absolute inset-x-0 top-0 h-1 ${isCurrent ? 'bg-[#e47769]' : 'bg-[#bcc8c0]'}`} />
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="rounded-md bg-[#edf3ef] px-2 py-1 text-xs font-bold text-[#52675c]">Period {lesson.period}</span>
+                    <span className="flex shrink-0 items-center gap-1 text-xs tabular-nums text-[#748078]"><Clock3 className="size-3.5" />{lesson.startTime} - {lesson.endTime}</span>
+                  </div>
+                  <div className="mt-7">
+                    <h3 className="text-xl font-bold text-[#26332e]">{lesson.subject}</h3>
+                    <p className="mt-1 text-sm text-[#69766e]">{t('class', { name: lesson.className })}</p>
+                  </div>
+                  <div className="mt-auto flex items-center justify-between gap-2 pt-6">
+                    <p className="flex items-center gap-1.5 text-xs font-semibold text-[#527263]"><MapPin className="size-3.5" />{t('room', { id: lesson.roomId })}</p>
+                    {isCurrent && <span className="rounded-md bg-[#e47769] px-2 py-1 text-xs font-bold text-white">{t('current')}</span>}
+                  </div>
+                </button>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
+        <section id="reports" className="mt-12 scroll-mt-24" aria-labelledby="reports-title">
+          <div className="mb-4">
+            <p className="mb-1 text-xs font-bold uppercase text-[#d05f54]">{t('insights')}</p>
+            <h2 id="reports-title" className="text-2xl font-bold text-[#26332e]">{t('reports')}</h2>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {reportScopes.map((scope) => (
+              <button key={scope.id} className="group flex w-full items-center gap-4 rounded-lg border border-[#dce5de] bg-white/85 p-4 text-left transition hover:-translate-y-0.5 hover:border-[#b9cbc0] hover:shadow-[0_10px_24px_rgba(52,76,61,0.07)]" onClick={() => console.log('selected scope:', scope.id)}>
+                <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${scope.color}`}>{scope.icon}</div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-bold text-[#314038]">{t(`reportItems.${scope.id}.label`)}</h3>
+                  <p className="mt-0.5 text-xs text-[#748078]">{t(`reportItems.${scope.id}.description`)}</p>
+                </div>
+                <ChevronRight20Regular className="size-4 shrink-0 text-[#9aa89f] transition group-hover:translate-x-0.5 group-hover:text-[#d05f54]" />
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  )
+}
+
+export default function Dashboard() {
+  const [queryClient] = useState(() => new QueryClient())
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <DashboardContent />
+    </QueryClientProvider>
+  )
+}

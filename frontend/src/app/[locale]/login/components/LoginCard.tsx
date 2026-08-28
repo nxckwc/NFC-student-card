@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import SchoolHeader from "./SchoolHeader";
@@ -32,24 +31,14 @@ const LoginCard = () => {
   return (
     <motion.section
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      className="flex flex-col justify-center lg:justify-end"
+      className="flex w-full flex-col justify-center"
       initial={{ opacity: 0, scale: 0.98, y: 18 }}
       transition={{ delay: 0.05, duration: 0.55 }}
     >
-      <div className="flex justify-center mb-2">
-        <Image
-          alt="cog top"
-          className="object-cover"
-          height={150}
-          src="/cog-removebg-preview.png"
-          width={150}
-        />
-      </div>
+      <div className="relative w-full">
+        <div className="relative overflow-hidden rounded-2xl border border-[#e6dfda] bg-[#fffdfb] p-6 shadow-[0_24px_70px_rgba(83,68,60,0.10)] sm:p-8">
 
-      <div className="relative min-w-104">
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/35 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.60)] backdrop-blur">
-
-          <div className={`${isSuccess ? "hidden" : "absolute"} left-0 top-0 h-0.5 w-full bg-linear-to-r from-transparent via-red-500/80 to-transparent`} />
+          <div className={`${isSuccess ? "hidden" : "absolute"} left-0 top-0 h-1 w-full bg-[#c94f5f]`} />
 
           <motion.div
             animate={{ height: isSuccess ? 50 : "auto" }}
@@ -58,7 +47,7 @@ const LoginCard = () => {
           >
             <motion.div
               animate={{ opacity: isSuccess ? 1 : 0 }}
-              className="text-3xl absolute font-bold"
+              className="absolute text-2xl font-bold text-[#466052]"
             >
               {t("success")}
             </motion.div>
@@ -87,15 +76,6 @@ const LoginCard = () => {
         </div>
       </div>
 
-      <div className="flex justify-center mt-2">
-        <Image
-          alt="cog bottom"
-          className="object-cover"
-          height={150}
-          src="/re-cog-removebg-preview.png"
-          width={150}
-        />
-      </div>
     </motion.section>
   );
 };

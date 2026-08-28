@@ -1,8 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f7f3;
+  --foreground: #26332e;
+  --surface: #ffffff;
+  --surface-muted: #e9eeea;
+  --border: #dce5de;
+  --accent: #3f7565;
+  --accent-dark: #2f5d50;
+  --accent-soft: #deece4;
+  --sage: #deece4;
+  --sage-foreground: #356b5c;
+  --sky: #e0ecf3;
+  --sky-foreground: #426778;
 }
 
 @theme inline {
@@ -12,15 +22,37 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid rgba(63, 117, 101, 0.24);
+  outline-offset: 2px;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.skeleton {
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+  background: #dfe7e1;
+}
+
+.schedule-rail {
+  scrollbar-color: #a9bdb1 transparent;
+  scrollbar-width: thin;
 }
