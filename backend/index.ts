@@ -7,7 +7,7 @@ import 'dotenv/config'
 import { createStudent, getStudent, getStudentByCard } from './src/controllers/student.js'
 
 const app = express()
-const port = 3100
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3100
 const frontendOrigin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:3000'
 
 // Swagger
