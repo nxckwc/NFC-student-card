@@ -31,17 +31,14 @@ const LoginCard = () => {
   return (
     <motion.section
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      className="flex w-full flex-col justify-center"
+      className="mx-auto flex w-full max-w-md flex-col justify-center"
       initial={{ opacity: 0, scale: 0.98, y: 18 }}
       transition={{ delay: 0.05, duration: 0.55 }}
     >
       <div className="relative w-full">
         <div className="relative overflow-hidden rounded-2xl border border-[#e6dfda] bg-[#fffdfb] p-6 shadow-[0_24px_70px_rgba(83,68,60,0.10)] sm:p-8">
-
-          <div className={`${isSuccess ? "hidden" : "absolute"} left-0 top-0 h-1 w-full bg-[#c94f5f]`} />
-
           <motion.div
-            animate={{ height: isSuccess ? 50 : "auto" }}
+            animate={{ height: isSuccess ? 36 : "auto" }}
             transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
             className="relative flex justify-center items-center"
           >

@@ -134,13 +134,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   if (!secret) throw new Error('JWT_SECRET is not defined')
 
   const token = jwt.sign(
-    { id: user.id, username: user.username },
+    { id: user.id, username: user.username, role: user.role },
     secret,
     { expiresIn: '1h' }
   )
 
   setAuthCookie(res, token, rememberMe)
-  res.json({ id: user.id, username: user.username })
+  res.json({ id: user.id, username: user.username, role: user.role })
 }
 
 export const session = async (req: Request, res: Response): Promise<void> => {
@@ -159,7 +159,8 @@ export const session = async (req: Request, res: Response): Promise<void> => {
       authenticated: true,
       user: {
         id: payload.id,
-        username: payload.username
+        username: payload.username,
+        role: payload.role
       }
     })
   } catch {

@@ -3,9 +3,10 @@
     "home": "หน้าหลักแดชบอร์ดโรงเรียน",
     "school": "พรานกระต่ายพิทยาคม",
     "product": "ระบบเช็กชื่อนักเรียน",
-    "overview": "ภาพรวม",
+    "overview": "แดชบอร์ด",
     "schedule": "ตารางสอน",
     "reports": "รายงาน",
+    "admin": "ผู้ดูแล",
     "language": "เปลี่ยนภาษา"
   },
   "dashboard": {
@@ -27,19 +28,169 @@
     "insights": "ข้อมูลเชิงลึก",
     "reports": "รายงาน",
     "days": {
-      "1": { "short": "จ.", "full": "จันทร์" },
-      "2": { "short": "อ.", "full": "อังคาร" },
-      "3": { "short": "พ.", "full": "พุธ" },
-      "4": { "short": "พฤ.", "full": "พฤหัสบดี" },
-      "5": { "short": "ศ.", "full": "ศุกร์" },
-      "6": { "short": "ส.", "full": "เสาร์" },
-      "7": { "short": "อา.", "full": "อาทิตย์" }
+      "1": {
+        "short": "จ.",
+        "full": "จันทร์"
+      },
+      "2": {
+        "short": "อ.",
+        "full": "อังคาร"
+      },
+      "3": {
+        "short": "พ.",
+        "full": "พุธ"
+      },
+      "4": {
+        "short": "พฤ.",
+        "full": "พฤหัสบดี"
+      },
+      "5": {
+        "short": "ศ.",
+        "full": "ศุกร์"
+      },
+      "6": {
+        "short": "ส.",
+        "full": "เสาร์"
+      },
+      "7": {
+        "short": "อา.",
+        "full": "อาทิตย์"
+      }
     },
     "reportItems": {
-      "arrival": { "label": "การเข้าโรงเรียน", "description": "ติดตามเวลาเข้าและการมาสายรายวัน" },
-      "student": { "label": "รายงานนักเรียน", "description": "การเข้าเรียนรายบุคคล" },
-      "class": { "label": "รายงานห้องเรียน", "description": "การเข้าเรียนแยกตามห้อง" },
-      "subject": { "label": "รายงานรายวิชา", "description": "การเข้าเรียนแยกตามวิชา" }
+      "arrival": {
+        "label": "การเข้าโรงเรียน",
+        "description": "ติดตามเวลาเข้าและการมาสายรายวัน"
+      },
+      "student": {
+        "label": "รายงานนักเรียน",
+        "description": "การเข้าเรียนรายบุคคล"
+      },
+      "class": {
+        "label": "รายงานห้องเรียน",
+        "description": "การเข้าเรียนแยกตามห้อง"
+      },
+      "subject": {
+        "label": "รายงานรายวิชา",
+        "description": "การเข้าเรียนแยกตามวิชา"
+      }
+    }
+  },
+  "admin": {
+    "workspace": "พื้นที่จัดการระบบ",
+    "title": "แผงผู้ดูแลระบบ",
+    "overviewDescription": "ติดตามการทำงานของโรงเรียนและจัดการตารางสอนได้จากที่เดียว",
+    "systemOverview": "ภาพรวมระบบ",
+    "sections": "หมวดการจัดการ",
+    "nav": {
+      "overview": "ภาพรวม"
+    },
+    "navSection": "เมนูลัดแผงผูดูแลระบบ",
+    "signedInAs": "เขาสูระบบเป็น {username}",
+    "students": "นักเรียน",
+    "attendance": "บันทึกการเข้าเรียน",
+    "accounts": "บัญชีผู้ใช้",
+    "scheduleCoverage": "ตารางที่ตั้งค่าแล้ว",
+    "manageSchedules": "จัดการตารางสอน",
+    "activity": "กิจกรรมการเขาระบบ",
+    "logs": "บันทึก",
+    "activeReader": "เครื่องอ่านที่ใช้งาน",
+    "notConnected": "ยังไม่เชื่อมต่อ",
+    "readerPending": "รอการเชื่อมต่อฮาร์ดแวร์",
+    "tickets": "รายการแจ้งปัญหา",
+    "noOpenTickets": "ไม่มีรายการเปิดอยู่",
+    "ticketPending": "การแจ้งปัญหาจะแสดงที่นี่",
+    "softwareErrors": "ข้อผิดพลาดซอฟต์แวร์",
+    "noErrors": "ไม่มีข้อผิดพลาด",
+    "errorsPending": "ข้อผิดพลาดที่พบจะแสดงที่นี่",
+    "stats": "สถิติ",
+    "attendanceStats": "ภาพรวมการเข้าเรียน",
+    "today": "วันนี้",
+    "scannedAtGate": "เข้าโรงเรียนเช้า",
+    "studentsScannedToday": "{count} คนไม่ได้สแกนทันเวลา",
+    "notScanned": "เข้าเรียน",
+    "studentsNotScannedToday": "{count} คนไม่ได้สแกนเข้าเรียน",
+    "latestLog": "บันทึกการเข้าเรียนล่าสุด",
+    "noLatestLog": "ยังไม่มีการสแกนการเข้าเรียน",
+    "sectionAccountsDescription": "จัดการบัญชีผูใช บทบาท และตารางสอนประจำสัปดาห",
+    "sectionStudentsDescription": "ลงทะเบียนบัตรนักเรียนและดูขอมูลนักเรียน",
+    "sectionActivityDescription": "ดูกิจกรรมเขาเรียนลาสูด",
+    "recentActivity": "กิจกรรมลาสูด",
+    "viewAll": "ดูทังหมด",
+    "studentDataUnavailable": "ข้อมูลนักเรียนและการเข้าเรียนกำลังรอการตั้งค่าฐานข้อมูล",
+    "accountManagement": "จัดการบัญชี",
+    "accountsDescription": "จัดการบญั ชีผ้้ใช บทบาท และตารางสอนประจำสัปดาห์",
+    "account": "บัญชี",
+    "role": "บทบาท",
+    "memberSince": "สมาชิกตังแตวันที {date}",
+    "memberSinceLabel": "เป็นสมาชิกตั้งแต่",
+    "actions": "การดำเนินงาน",
+    "you": "คูณ",
+    "searchAccounts": "คนหาบัญชี...",
+    "accountCount": "{count, plural, other {# บัญชี}}",
+    "noAccounts": "ยังไมมีบัญชี",
+    "noAccountsFound": "ไมพบบัญชีทีตรงกับคำคนหา",
+    "periods": "คาบ",
+    "promote": "ยกระดับเป็นผูดูแลระบบ",
+    "demote": "ลดระดับเป็นผูใช",
+    "deleteAccount": "ลบบัญชี",
+    "roleLocked": "ไมสามารถเปลียนบทบาทของตนเองหรือผูดูแลรายสูดทายได",
+    "deleteLocked": "ไมสามารถลบบัญชีของตนเองหรือผูดูแลรายสูดทายได",
+    "roleUpdated": "อัปเดตบทบาทของ {username} แลว",
+    "accountDeleted": "ลบบัญชีของ {username} แลว",
+    "deleteConfirmTitle": "ลบบัญชี?",
+    "deleteConfirmBody": "{username} และตารางสอนของเขาจะถูกลบอยางถาวร ไมสามารถกูคืนได",
+    "demoteConfirmTitle": "ลดบทบาทผูดูแล?",
+    "demoteConfirmBody": "{username} จะเสียสิทธิเขาสูแผงผูดูแลระบบ",
+    "cancel": "ขัดตอน",
+    "backToAccounts": "กลับไปยังบัญชีทั้งหมด",
+    "accountDetails": "รายละเอียดบัญชี",
+    "accountId": "รหัสบัญชี",
+    "accountNotFound": "บัญชีนีไมมีอยูแลว",
+    "invalidId": "รหัสบัญชีไมถูกตอง",
+    "assignSchedule": "กำหนดตารางสอนรายสัปดาห์",
+    "selectDay": "เลือกวัน",
+    "period": "คาบที่",
+    "subject": "วิชา",
+    "className": "ชั้นเรียน",
+    "room": "ห้อง",
+    "incompleteRows": "{count, plural, other {# คายังไมครบจะถูกลบกอนบันทึก}}",
+    "save": "บันทึกตารางสอน",
+    "saving": "กำลังบันทึก...",
+    "saved": "บันทึกตารางสอนแล้ว",
+    "loadError": "เกิดปัญหาในการโหลดขอมูล กรูณาลองใหมอีกครัง",
+    "retry": "ลองอีกครัง",
+    "studentManagement": "จัดการนักเรียน",
+    "studentsDescription": "ลงทะเบียนบัตรนักเรียนและดูแลขอมูลใหเป็นไป",
+    "addStudent": "เพิมนักเรียน",
+    "firstName": "ชือ",
+    "lastName": "หนา",
+    "addStudentSuccess": "ลงทะเบียน {name} ดวยบัตร {card} แลว",
+    "searchStudents": "คนหาชือหรือรหัสบัตร...",
+    "studentCount": "{count, plural, other {# นักเรียน}}",
+    "student": "นักเรียน",
+    "cardUid": "รหัสบัตร",
+    "checkIns": "ครังเขาเรียน",
+    "added": "เพิมเมือ",
+    "noStudents": "ยังไมมีนักเรียน",
+    "noStudentsFound": "ไมพบนักเรียนทีตรงกับคำคนหา",
+    "copyCardId": "คัดลอกรหัสบัตร",
+    "copyFailed": "ไมสามารถคัดลอกได",
+    "activityLog": "บันทึกการเข้าเรียน",
+    "activityDescription": "บันทึกการเขาเรียนทังหมด ใหมสูดกอน",
+    "searchActivity": "คนหาจากชือนักเรียน...",
+    "activityCount": "{count, plural, other {# บันทึก}}",
+    "noActivity": "ยังไมมีกิจกรรมการเขาเรียน",
+    "noActivityFound": "ไมพบกิจกรรมทีตรงกับคำคนหา",
+    "loadMore": "โหลดเพิม",
+    "days": {
+      "1": "จ.",
+      "2": "อ.",
+      "3": "พ.",
+      "4": "พฤ.",
+      "5": "ศ.",
+      "6": "ส.",
+      "7": "อา."
     }
   },
   "login": {

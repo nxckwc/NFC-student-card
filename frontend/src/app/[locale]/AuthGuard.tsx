@@ -11,6 +11,10 @@ interface AuthGuardProps {
   children: React.ReactNode;
 }
 
+interface SessionResponse {
+  user: { role: string };
+}
+
 const AuthGuard = ({ locale, children }: AuthGuardProps) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -29,13 +33,19 @@ const AuthGuard = ({ locale, children }: AuthGuardProps) => {
 
     const verifySession = async () => {
       try {
-        await axios.get(`${API_BASE_URL}/auth/session`, {
+        const { data } = await axios.get<SessionResponse>(`${API_BASE_URL}/auth/session`, {
           withCredentials: true,
         });
 
         if (!isActive) return;
 
         if (isLoginRoute) {
+          setIsAllowed(false);
+          router.replace(`/${locale}/${data.user.role === "ADMIN" ? "admin" : "dashboard"}`);
+          return;
+        }
+
+        if (pathname.startsWith(`/${locale}/admin`) && data.user.role !== "ADMIN") {
           setIsAllowed(false);
           router.replace(`/${locale}/dashboard`);
           return;

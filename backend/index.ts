@@ -6,6 +6,7 @@ import { login, logout, register, session } from './src/controllers/auth.js'
 import 'dotenv/config'
 import { createStudent, getStudent, getStudentByCard } from './src/controllers/student.js'
 import { getSchedule } from './src/controllers/schedule.js'
+import { deleteAccount, getAccount, getAccounts, getAdminOverview, getAttendance, getStudents, replaceAccountSchedule, updateAccountRole } from './src/controllers/admin.js'
 
 const app = express()
 const port = 3100
@@ -56,6 +57,14 @@ app.get('/auth/session', session)
 app.post('/auth/logout', logout)
 
 app.get('/dashboard/schedule', getSchedule)
+app.get('/admin/overview', getAdminOverview)
+app.get('/admin/accounts', getAccounts)
+app.get('/admin/accounts/:accountId', getAccount)
+app.put('/admin/accounts/:accountId/schedule', replaceAccountSchedule)
+app.patch('/admin/accounts/:accountId/role', updateAccountRole)
+app.delete('/admin/accounts/:accountId', deleteAccount)
+app.get('/admin/students', getStudents)
+app.get('/admin/attendance', getAttendance)
 
 app.post('/student', createStudent)
 app.get('/student/card/:studentCardId', getStudentByCard)

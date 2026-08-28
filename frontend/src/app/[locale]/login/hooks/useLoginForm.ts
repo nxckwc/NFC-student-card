@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import axios from "axios";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3100").replace(/\/+$/, "");
@@ -21,6 +21,7 @@ const getAuthErrorMessage = (
 };
 
 export function useLoginForm() {
+  const locale = useLocale();
   const tError = useTranslations("login.errors");
   const tForm = useTranslations("login.form");
   const [mode, setMode] = useState<AuthMode>("login");
@@ -71,7 +72,7 @@ export function useLoginForm() {
 
     try {
       const endpoint = mode === "login" ? "/auth/login" : "/auth/register";
-      await axios.post(`${API_BASE_URL}${endpoint}`, {
+      const { data } = await axios.post<{ role: string }>(`${API_BASE_URL}${endpoint}`, {
         username,
         password,
         rememberMe,
@@ -88,6 +89,9 @@ export function useLoginForm() {
 
       setIsSuccess(true);
       setPassword("");
+      if (data.role === "ADMIN") {
+        window.setTimeout(() => { window.location.href = `/${locale}/admin`; }, 800);
+      }
     } catch (error) {
       const message =
         axios.isAxiosError(error)
