@@ -37,7 +37,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <AuthGuard locale={locale}>
-        <div className={`flex min-h-screen min-w-screen flex-col ${fontClass}`}>
+        <div className={`flex min-h-screen w-full flex-col ${fontClass}`}>
           <Navbar />
           {children}
         </div>

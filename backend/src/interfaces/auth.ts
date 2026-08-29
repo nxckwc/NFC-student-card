@@ -7,4 +7,5 @@ export interface AuthRequestBody {
 export interface JwtPayload {
   id: number;
   username: string;
+  role: string;
 }

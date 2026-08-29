@@ -7,10 +7,10 @@ const SchoolHeader = () => {
 
   return (
     <div className="flex items-center gap-3 select-none">
-      <div className="h-24 w-24 overflow-hidden rounded-2xl">
+      <div className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-[#f8e7e9] p-1">
         <Image
           alt="School logo"
-          className="h-full w-full rounded-xl object-cover"
+          className="h-full w-full object-contain"
           height={96}
           src="/images-removebg-preview (1) (1).png"
           width={96}
@@ -18,8 +18,8 @@ const SchoolHeader = () => {
       </div>
 
       <div>
-        <div className="text-m font-semibold text-white">{ t("name") }</div>
-        <div className="text-xs text-white/60">{ t("dashboard") }</div>
+        <div className="text-base font-bold text-[#303536]">{ t("name") }</div>
+        <div className="mt-1 text-xs text-[#817873]">{ t("dashboard") }</div>
       </div>
     </div>
   );

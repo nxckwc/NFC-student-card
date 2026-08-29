@@ -12,6 +12,7 @@
     "start": "node dist/index.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "docker:db": "docker compose up -d db",
@@ -40,5 +41,12 @@
     "prisma": "^6.19.3",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "bcrypt@6.0.0": true,
+    "esbuild@0.28.0": true,
+    "prisma@6.19.3": true
   }
 }
