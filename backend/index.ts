@@ -9,7 +9,7 @@ import { getSchedule } from './src/controllers/schedule.js'
 import { deleteAccount, getAccount, getAccounts, getAdminOverview, getAttendance, getStudents, replaceAccountSchedule, updateAccountRole } from './src/controllers/admin.js'
 
 const app = express()
-const port = 3100
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3100
 const frontendOrigin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:3000'
 
 // Swagger

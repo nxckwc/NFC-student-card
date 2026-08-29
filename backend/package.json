@@ -13,7 +13,12 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "docker:db": "docker compose up -d db",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
