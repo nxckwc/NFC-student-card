@@ -45,4 +45,4 @@ COPY --from=builder /app/node_modules ./node_modules
 EXPOSE 3100
 
 # Run pending migrations on startup and start production server
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && node dist/index.js"]
