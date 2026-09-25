@@ -16,6 +16,7 @@ The core application is a Next.js frontend and an Express API backed by PostgreS
 | Teacher dashboard | View daily and weekly schedules, open class lists, and mark students present, late, or absent. Class lists receive live updates through Server-Sent Events (SSE). |
 | Administration | Manage account roles, teacher schedules, readers, reader assignments, school settings, and attendance activity. |
 | Reader testing | Simulate taps, look up cards, and register cards from the admin interface. |
+| Reports | Generate student gate, classroom, or combined reports for a date range, view summaries and history, and print the result. |
 | Interface | English and Thai locale routes, responsive layouts, and light/dark themes. |
 
 Accounts use the `USER`, `TEACHER`, and `ADMIN` roles. New registrations receive `USER`; an administrator can assign staff roles. Student records are separate from login accounts. Authentication uses bcrypt password hashes and JWTs stored in an HTTP-only cookie.
@@ -30,6 +31,8 @@ flowchart LR
     Web[Next.js dashboard] -->|HTTP requests| API
     API --> DB[(PostgreSQL)]
     API -->|SSE class-list updates| Web
+    API -->|Authorized report requests| Analytics[FastAPI analytics]
+    Analytics --> DB
 ```
 
 1. Create a student and link a card UID to their official student ID.
@@ -119,7 +122,19 @@ NEXT_PUBLIC_API_URL=http://localhost:3100
 | API | [localhost:3100](http://localhost:3100) |
 | Swagger UI in development | [localhost:3100/api-docs](http://localhost:3100/api-docs) |
 
-### Alternative: run the API and database in Docker
+### 4. Start analytics for the Reports page
+
+In another terminal, from `backend`:
+
+```sh
+docker compose up --build -d analytics
+```
+
+The analytics service connects to the same Compose database and is available to the host API at `http://127.0.0.1:8000`. Open **Reports** in the navigation, select a student, attendance type, and date range, then choose **Generate report**. The **Print** button prints the generated report without navigation or filters.
+
+Administrators can report on all students; teachers can report on students in their currently assigned classes. Reports accept up to 366 days. For a Python-only setup or a database outside Compose, see the [analytics setup guide](analytics/README.md).
+
+### Alternative: run the API, analytics, and database in Docker
 
 After configuring `backend/.env`, run from `backend`:
 
@@ -133,7 +148,7 @@ Once the API has started, create the local administrator:
 docker compose exec api npm run db:seed
 ```
 
-The API image generates Prisma Client and compiles TypeScript during the build, then applies migrations on startup. Compose supplies a database URL using the internal `db` hostname. Start the frontend separately using step 3; Compose includes only the API and database. Use this alternative in place of the host API to avoid a port conflict.
+The API image generates Prisma Client and compiles TypeScript during the build, then applies migrations on startup. Compose supplies a database URL using the internal `db` hostname and connects the API to `http://analytics:8000`. Start the frontend separately using step 3; Compose includes the API, analytics, and database. Use this alternative in place of the host API to avoid a port conflict.
 
 Use `npm run docker:logs` to follow container logs and `npm run docker:down` to stop the stack. Database data persists in the `postgres_data` volume. The API container runs in production mode and sets secure authentication cookies; use HTTPS when accessing it outside localhost.
 
@@ -167,6 +182,9 @@ Backend values are documented in [`backend/.env.example`](backend/.env.example).
 | `JWT_SECRET` | Secret used to sign and verify login tokens. |
 | `FRONTEND_ORIGIN` | Allowed browser origin for credentialed CORS; defaults to `http://localhost:3000`. |
 | `READER_DEVICE_SECRET` | Shared token for card registration via the `X-Device-Token` header. |
+| `ANALYTICS_URL` | Internal analytics address used by Express; defaults to `http://127.0.0.1:8000`. Compose sets it to `http://analytics:8000`. |
+| `ANALYTICS_PORT` | Analytics port published on localhost by Compose; defaults to `8000`. Match `ANALYTICS_URL` when using a different host port. |
+| `ANALYTICS_SERVICE_TOKEN` | Optional internal token shared by Express and analytics. Both fall back to `JWT_SECRET` when unset; it is never sent to the browser. |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Database initialization settings used by Compose. Keep the host `DATABASE_URL` consistent with these values. |
 | `DB_PORT` | Published PostgreSQL port; defaults to `5432`. Update the host `DATABASE_URL` if changed. |
 | `NEXT_PUBLIC_API_URL` | Frontend setting in `frontend/.env.local`; defaults to `http://localhost:3100`. Set it before building for deployment. |
@@ -181,6 +199,8 @@ The route definitions in [`backend/index.ts`](backend/index.ts) are the complete
 | --- | --- |
 | `/auth/*` | Registration, login, session lookup, profile updates, and logout. |
 | `/dashboard/schedule` | The signed-in account's timetable. |
+| `GET /analytics/students` | Students available for the signed-in staff member's reports. |
+| `GET /analytics/reports/student/:studentId` | Student metadata, summary, and history. Accepts `start`/`end` (`YYYY-MM-DD`, inclusive) and `kind` (`all`, `gate`, `room`). Uses the student's internal UUID. Append `/history`, `/analysis`, or `/csv` for individual formats. |
 | `/dashboard/namelist/:entryId` | Today's class list, with student-status updates and an `/events` SSE stream. Requires a teacher assigned to the entry or an administrator. |
 | `/admin/*` | Account, student, reader, attendance, and school-settings administration. |
 | `POST /student` | Create a student record. |
@@ -204,7 +224,7 @@ NFC-student-card/
 │   ├── index.ts          Server entry point and route registration
 │   ├── src/              Controllers, interfaces, authentication, and SSE helpers
 │   └── prisma/           Database schema, migrations, and administrator seed
-├── analytics/            Python reporting prototype targeting the legacy schema
+├── analytics/            FastAPI reports over GateLog and RoomLog, plus tests
 ├── hardware/             Placeholder for hardware integration
 └── .github/ISSUE_TEMPLATE/ Bug reports, feature requests, and user stories
 ```
@@ -216,7 +236,7 @@ NFC-student-card/
 | Web | Next.js 16, React 19, TypeScript, Tailwind CSS 4, TanStack Query, Axios, next-intl, Motion |
 | API | Express 5, TypeScript with ES modules, Prisma 6, JWT, bcrypt, Swagger UI |
 | Data and local infrastructure | PostgreSQL 16, Docker Compose |
-| Analytics prototype | Python, FastAPI, pandas, SQLAlchemy |
+| Analytics | Python, FastAPI, SQLAlchemy |
 
 Exact dependency versions are maintained in the [frontend manifest](frontend/package.json), [backend manifest](backend/package.json), their lockfiles, and [analytics requirements](analytics/requirements.txt).
 
@@ -236,7 +256,7 @@ Run each command from the directory shown.
 | `backend` | `npm run db:deploy` | Apply committed migrations. |
 | `backend` | `npm run db:studio` | Inspect database records with Prisma Studio. |
 
-There are currently no automated test scripts in either npm package. For application changes, run the frontend lint and build commands and the backend build, then exercise the relevant workflow locally.
+For application changes, run the frontend lint and build commands and the backend build, then exercise the relevant workflow locally. Report tests cover PostgreSQL queries, date boundaries, lateness, CSV output, staff access, and the Express-to-analytics connection; see [analytics testing](analytics/README.md#testing) for the isolated test setup.
 
 ### Troubleshooting
 
@@ -247,12 +267,13 @@ There are currently no automated test scripts in either npm package. For applica
 | Browser requests fail or login does not persist | Match `NEXT_PUBLIC_API_URL` to the API address and `FRONTEND_ORIGIN` to the browser origin. Use a consistent hostname and restart after environment changes. |
 | Empty class list | Match the student's `classSection` to the timetable's `className`. |
 | Room scan returns `409` | Check teacher assignments, school timezone, and overlapping or missing timetable entries. |
+| Reports cannot be generated | Start analytics, check `ANALYTICS_URL`, and ensure both services use the same internal token and database. |
 
 ## Project status
 
 The web dashboard, API, reader simulation, role management, and gate/classroom attendance workflows are implemented in this repository.
 
 - **Hardware:** `hardware/` is a placeholder. Reader-facing HTTP endpoints exist, but firmware and physical device setup instructions are not included yet.
-- **Analytics:** `analytics/` contains history, analysis, and CSV-report endpoints built around the old `AttendanceLog` table. The main application now uses `GateLog` and `RoomLog`, so the prototype needs schema updates before it can report on current data. Its seeder also uses legacy fields and truncates student/attendance tables; it is not part of the setup above yet.
+- **Analytics:** Reports use `GateLog` and `RoomLog`. Gate lateness is calculated from the first arrival using the current school cutoff. Reports describe recorded attendance, not every card tap or inferred absences. The old `analytics/seeder.py` still targets the legacy schema and truncates tables; do not use it with the current application.
 - **Live updates:** Class-list SSE subscriptions are held in API-process memory. Multiple API instances would need a shared event mechanism.
 - **Other clients and notifications:** No mobile app or automated notification service is included yet.
