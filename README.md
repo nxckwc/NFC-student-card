@@ -1,81 +1,258 @@
+﻿# NFC Student Card
 
-#  NFC Student ID Card System
+Student identification and attendance management for school gates and classrooms. Register an NFC card to a student, record attendance through a reader, and manage students, timetables, and attendance from a web dashboard.
 
-A smart student identification and attendance system leveraging NFC (Near Field Communication) technology to streamline school operations and enhance student convenience.
+The core application is a Next.js frontend and an Express API backed by PostgreSQL. A built-in reader simulator lets you try the attendance workflow without physical NFC hardware.
 
-## Overview
+**Explore:** [Features](#features) · [Attendance workflow](#attendance-workflow) · [Local setup](#local-setup) · [Try it out](#try-it-out) · [Configuration](#configuration) · [Development](#development) · [Project status](#project-status)
 
-This project provides a comprehensive solution for managing student identification and attendance using NFC-enabled ID cards. Students can quickly check in/out and access school services by simply tapping their NFC cards, reducing manual paperwork and improving operational efficiency.
+## Features
 
-### Key Features
+| Area | Available functionality |
+| --- | --- |
+| Student records | Create, search, edit, and delete students; manage official student IDs, class sections, and linked card UIDs. |
+| Gate attendance | Toggle daily check-in/check-out and classify arrivals using the school's late cutoff and timezone. |
+| Classroom attendance | Match room-reader taps to an active teacher timetable; track attendance per class slot. |
+| Teacher dashboard | View daily and weekly schedules, open class lists, and mark students present, late, or absent. Class lists receive live updates through Server-Sent Events (SSE). |
+| Administration | Manage account roles, teacher schedules, readers, reader assignments, school settings, and attendance activity. |
+| Reader testing | Simulate taps, look up cards, and register cards from the admin interface. |
+| Interface | English and Thai locale routes, responsive layouts, and light/dark themes. |
 
--  **NFC-Based Authentication** - Secure student identification via NFC technology
--  **Real-Time Attendance Dashboard** - Track attendance records in real-time
--  **Student Management** - Comprehensive student profile and data management
--  **Modern UI** - Responsive, user-friendly dashboard built with React
--  **High Performance** - Built with Next.js for optimal performance
--  **Beautiful Design** - Tailwind CSS for sleek, modern styling
--  **API Documentation** - Interactive Swagger documentation
+Accounts use the `USER`, `TEACHER`, and `ADMIN` roles. New registrations receive `USER`; an administrator can assign staff roles. Student records are separate from login accounts. Authentication uses bcrypt password hashes and JWTs stored in an HTTP-only cookie.
 
-##  Tech Stack
+## Attendance workflow
 
-### Frontend
-- **Framework**: Next.js 16.2.6, React 19.2.4
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS v4
-- **State Management**: Zustand
-- **Data Fetching**: Axios, TanStack Query (React Query v5)
-- **Animations**: Motion
-- **Internationalization**: next-intl
-- **Icons**: Lucide React
-- **Compiler**: Babel React Compiler
+```mermaid
+flowchart LR
+    Card[NFC card UID] --> Reader[Gate or room reader]
+    Reader -->|HTTP scan request| API[Express API]
+    Simulator[Admin reader simulator] -->|Scan request| API
+    Web[Next.js dashboard] -->|HTTP requests| API
+    API --> DB[(PostgreSQL)]
+    API -->|SSE class-list updates| Web
+```
 
-### Backend
-- **Framework**: Express.js v5.2.1
-- **Language**: JavaScript (ES Modules)
-- **ORM**: Prisma v6.19.3
-- **Authentication**: JWT (jsonwebtoken), bcrypt
-- **API Documentation**: Swagger UI & JSDoc
-- **CORS**: Enabled for development
-- **Dev Tools**: Nodemon
+1. Create a student and link a card UID to their official student ID.
+2. Create an active reader with type `GATE` or `ROOM`. Room readers also need teacher assignments and a matching timetable.
+3. Submit a scan containing the reader ID and card UID. The API identifies the student and applies the reader's attendance rules.
+4. Review activity in the admin dashboard or view today's class list as a teacher.
 
-##  Key Dependencies
+| Reader | Attendance behavior |
+| --- | --- |
+| `GATE` | Keeps one record per student per school day. Each tap toggles `IN`/`OUT`; an arrival at or after the configured cutoff is `LATE`. The record retains the first arrival and updates subsequent arrival/departure fields. |
+| `ROOM` | Requires exactly one active schedule across the reader's assigned teachers. Records `PRESENT` at the start minute or `LATE` afterward. Repeated taps for the same student, room, subject, period, and date reuse the existing record. |
 
-### Frontend
-| Package | Version | Purpose |
-|---------|---------|---------|
-| Next.js | 16.2.6 | React framework |
-| React | 19.2.4 | UI library |
-| TypeScript | 5 | Type safety |
-| Tailwind CSS | 4 | Styling |
-| Zustand | 5.0.13 | State management |
-| TanStack Query | 5.100.14 | Server state |
-| Axios | 1.16.1 | HTTP client |
+Class lists select students whose `classSection` matches the timetable's `className`. A student without a room attendance record appears as `ABSENT`. The default school timezone is `Asia/Bangkok`, with a gate late cutoff of `08:00`.
 
-### Backend
-| Package | Version | Purpose |
-|---------|---------|---------|
-| Express | 5.2.1 | Web framework |
-| Prisma | 6.19.3 | ORM |
-| JWT | 9.0.3 | Authentication |
-| bcrypt | 6.0.0 | Password hashing |
-| CORS | 2.8.6 | Cross-origin requests |
+## Local setup
 
-##  Features in Development
+### Prerequisites
 
-- [ ] Mobile app (React Native)
-- [x] Web dashboard (Nextjs)
-- [ ] reporting and analytics
-- [ ] Automated notifications
-- [x] Multi-language support (partial: next-intl)
-- [ ] NFC hardware integration
-- [ ] Role-based access control
-- [ ] Student attendance history
+- Node.js 20.9 or newer and npm.
+- Docker with Docker Compose for the database, or an existing PostgreSQL instance. The supplied Compose configuration uses PostgreSQL 16.
 
-##  Security
+Run the following commands from a local checkout. The frontend and backend have separate dependencies and lockfiles; there is no root npm workspace.
 
-- Password hashing with bcrypt
-- JWT-based authentication
-- CORS protection
-- Environment variable management
-- Prisma for SQL injection prevention
+### 1. Configure the backend
+
+```sh
+cd backend
+npm ci
+```
+
+Copy `backend/.env.example` to `backend/.env` if you do not already have an environment file. From the `backend` directory, use the command for your shell:
+
+```powershell
+# PowerShell
+Copy-Item .env.example .env
+```
+
+```sh
+# macOS / Linux
+cp .env.example .env
+```
+
+Set `JWT_SECRET` and `READER_DEVICE_SECRET` to your own values. The example database credentials and connection URL are aligned for running PostgreSQL in Docker and the API on your host.
+
+### 2. Start the database and API
+
+From `backend`:
+
+```sh
+npm run docker:db
+```
+
+Wait for the database to become healthy (`docker compose ps`), then initialize it and start the API:
+
+```sh
+npm run db:generate
+npm run db:deploy
+npm run db:seed
+npm run dev
+```
+
+If you already run PostgreSQL, skip `docker:db` and set `DATABASE_URL` to that database before applying migrations.
+
+The seed creates an administrator with username **`admin`** and password **`admin`**. It does not create students, readers, or schedules. Running it again resets that account's password to `admin` and role to `ADMIN`; use it only for local setup and change the password before using a shared environment.
+
+### 3. Start the frontend
+
+In a second terminal, from the project root:
+
+```sh
+cd frontend
+npm ci
+npm run dev
+```
+
+The frontend defaults to `http://localhost:3100` for API requests. To change it, create `frontend/.env.local` with:
+
+```dotenv
+NEXT_PUBLIC_API_URL=http://localhost:3100
+```
+
+| Service | Local address |
+| --- | --- |
+| Web application | [localhost:3000](http://localhost:3000) |
+| English login | [localhost:3000/en/login](http://localhost:3000/en/login) |
+| Thai login | [localhost:3000/th/login](http://localhost:3000/th/login) |
+| API | [localhost:3100](http://localhost:3100) |
+| Swagger UI in development | [localhost:3100/api-docs](http://localhost:3100/api-docs) |
+
+### Alternative: run the API and database in Docker
+
+After configuring `backend/.env`, run from `backend`:
+
+```sh
+npm run docker:up
+```
+
+Once the API has started, create the local administrator:
+
+```sh
+docker compose exec api npm run db:seed
+```
+
+The API image generates Prisma Client and compiles TypeScript during the build, then applies migrations on startup. Compose supplies a database URL using the internal `db` hostname. Start the frontend separately using step 3; Compose includes only the API and database. Use this alternative in place of the host API to avoid a port conflict.
+
+Use `npm run docker:logs` to follow container logs and `npm run docker:down` to stop the stack. Database data persists in the `postgres_data` volume. The API container runs in production mode and sets secure authentication cookies; use HTTPS when accessing it outside localhost.
+
+## Try it out
+
+### Record a gate visit without hardware
+
+1. Sign in with the seeded administrator account and open **Students** at `/en/admin/students`.
+2. Add a student with a numeric official student ID and a class section.
+3. Open `/en/admin/reader` and create a `GATE` reader.
+4. Open **Test** at `/en/admin/test`, select the reader, and enter a sample hexadecimal UID such as `04a1b2c3d4`.
+5. Select **Register card**, enter the student's official student ID, and use your backend `READER_DEVICE_SECRET` as the registration device token.
+6. Select **Tap** and process the tap to check the student in. Tap again to check them out, then review `/en/admin/activity`.
+
+The simulator writes attendance to the database. Scan UIDs must contain 6–32 hexadecimal characters and are normalized to lowercase.
+
+### Try classroom attendance
+
+Register another login account and use the admin **Accounts** page to assign it the `TEACHER` role and a timetable. Use a timetable class name that exactly matches the student's class section. Create a `ROOM` reader and assign that teacher to it.
+
+During the scheduled class time, simulate a tap using the room reader. Sign in as the teacher and open the class from the dashboard to see attendance and adjust statuses. Room scans return a conflict if there is no active class, no assigned teacher, or more than one matching active schedule.
+
+## Configuration
+
+Backend values are documented in [`backend/.env.example`](backend/.env.example).
+
+| Variable | Purpose |
+| --- | --- |
+| `PORT` | API port; defaults to `3100`. In Compose, controls the published host port while the container listens on `3100`. |
+| `DATABASE_URL` | PostgreSQL connection string for Prisma. Use `localhost` for a host API and `db` for the Compose API. |
+| `JWT_SECRET` | Secret used to sign and verify login tokens. |
+| `FRONTEND_ORIGIN` | Allowed browser origin for credentialed CORS; defaults to `http://localhost:3000`. |
+| `READER_DEVICE_SECRET` | Shared token for card registration via the `X-Device-Token` header. |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Database initialization settings used by Compose. Keep the host `DATABASE_URL` consistent with these values. |
+| `DB_PORT` | Published PostgreSQL port; defaults to `5432`. Update the host `DATABASE_URL` if changed. |
+| `NEXT_PUBLIC_API_URL` | Frontend setting in `frontend/.env.local`; defaults to `http://localhost:3100`. Set it before building for deployment. |
+
+Card registration and attendance scans use different credentials: registration uses the shared `READER_DEVICE_SECRET`, while each reader has its own generated `deviceToken` for scans.
+
+## API guide
+
+The route definitions in [`backend/index.ts`](backend/index.ts) are the complete route inventory. Swagger UI documents annotated routes, so it does not cover every endpoint. Its current source-file glob also means the compiled Docker image may show incomplete documentation.
+
+| Route group | Purpose |
+| --- | --- |
+| `/auth/*` | Registration, login, session lookup, profile updates, and logout. |
+| `/dashboard/schedule` | The signed-in account's timetable. |
+| `/dashboard/namelist/:entryId` | Today's class list, with student-status updates and an `/events` SSE stream. Requires a teacher assigned to the entry or an administrator. |
+| `/admin/*` | Account, student, reader, attendance, and school-settings administration. |
+| `POST /student` | Create a student record. |
+| `POST /card/register` | Link a card using `{ "studentId": "12345", "cardUid": "04a1b2c3d4" }` and `X-Device-Token`. Here `studentId` is the official student ID. |
+| `POST /admin/reader/scan` | Submit `{ "readerId": "<reader-id>", "cardUid": "04a1b2c3d4" }` using an admin session or the reader's `X-Reader-Token`. |
+
+Add `"dryRun": true` to a scan request to validate the reader and card lookup without writing attendance. A dry run does not check classroom schedule availability.
+
+## Development
+
+### Repository map
+
+```text
+NFC-student-card/
+├── frontend/             Next.js application
+│   └── src/
+│       ├── app/[locale]/ Dashboard, schedules, class lists, login, and admin pages
+│       ├── i18n/         Locale routing and request configuration
+│       └── messages/     English and Thai translations
+├── backend/              Express API, Dockerfile, and Compose configuration
+│   ├── index.ts          Server entry point and route registration
+│   ├── src/              Controllers, interfaces, authentication, and SSE helpers
+│   └── prisma/           Database schema, migrations, and administrator seed
+├── analytics/            Python reporting prototype targeting the legacy schema
+├── hardware/             Placeholder for hardware integration
+└── .github/ISSUE_TEMPLATE/ Bug reports, feature requests, and user stories
+```
+
+### Technology
+
+| Layer | Main tools |
+| --- | --- |
+| Web | Next.js 16, React 19, TypeScript, Tailwind CSS 4, TanStack Query, Axios, next-intl, Motion |
+| API | Express 5, TypeScript with ES modules, Prisma 6, JWT, bcrypt, Swagger UI |
+| Data and local infrastructure | PostgreSQL 16, Docker Compose |
+| Analytics prototype | Python, FastAPI, pandas, SQLAlchemy |
+
+Exact dependency versions are maintained in the [frontend manifest](frontend/package.json), [backend manifest](backend/package.json), their lockfiles, and [analytics requirements](analytics/requirements.txt).
+
+### Common commands
+
+Run each command from the directory shown.
+
+| Directory | Command | Purpose |
+| --- | --- | --- |
+| `frontend` | `npm run dev` | Start the Next.js development server. |
+| `frontend` | `npm run lint` | Run ESLint. |
+| `frontend` | `npm run build` / `npm start` | Build / serve the production frontend. |
+| `backend` | `npm run dev` | Run the API with TypeScript watch mode. |
+| `backend` | `npm run build` / `npm start` | Compile / run `dist/index.js`. |
+| `backend` | `npm run db:generate` | Regenerate Prisma Client after schema changes. |
+| `backend` | `npm run db:migrate` | Create and apply migrations during schema development. |
+| `backend` | `npm run db:deploy` | Apply committed migrations. |
+| `backend` | `npm run db:studio` | Inspect database records with Prisma Studio. |
+
+There are currently no automated test scripts in either npm package. For application changes, run the frontend lint and build commands and the backend build, then exercise the relevant workflow locally.
+
+### Troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| API cannot connect to PostgreSQL | Check `docker compose ps`, database credentials, and whether `DATABASE_URL` needs `localhost` or `db`. |
+| Missing tables or generated Prisma types | Apply `db:deploy` and run `db:generate` from `backend`. |
+| Browser requests fail or login does not persist | Match `NEXT_PUBLIC_API_URL` to the API address and `FRONTEND_ORIGIN` to the browser origin. Use a consistent hostname and restart after environment changes. |
+| Empty class list | Match the student's `classSection` to the timetable's `className`. |
+| Room scan returns `409` | Check teacher assignments, school timezone, and overlapping or missing timetable entries. |
+
+## Project status
+
+The web dashboard, API, reader simulation, role management, and gate/classroom attendance workflows are implemented in this repository.
+
+- **Hardware:** `hardware/` is a placeholder. Reader-facing HTTP endpoints exist, but firmware and physical device setup instructions are not included yet.
+- **Analytics:** `analytics/` contains history, analysis, and CSV-report endpoints built around the old `AttendanceLog` table. The main application now uses `GateLog` and `RoomLog`, so the prototype needs schema updates before it can report on current data. Its seeder also uses legacy fields and truncates student/attendance tables; it is not part of the setup above yet.
+- **Live updates:** Class-list SSE subscriptions are held in API-process memory. Multiple API instances would need a shared event mechanism.
+- **Other clients and notifications:** No mobile app or automated notification service is included yet.
