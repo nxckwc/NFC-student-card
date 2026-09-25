@@ -15,6 +15,7 @@ const Navbar = () => {
   const isLoginRoute = pathname.endsWith('/login');
   const isDashboardRoute = pathname.endsWith('/dashboard');
   const isScheduleRoute = pathname.endsWith('/schedule');
+  const isReportsRoute = pathname.endsWith('/reports');
   const isAccountRoute = pathname.endsWith('/account');
   const isAdminRoute = /^\/(en|th)\/admin/.test(pathname);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -37,17 +38,8 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const [hash, setHash] = useState('');
-  useEffect(() => {
-    const onHashChange = () => setHash(window.location.hash);
-    onHashChange();
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
-  }, [pathname]);
-
   useEffect(() => {
     if (isLoginRoute) {
-      setIsAdmin(false);
       return;
     }
     let isActive = true;
@@ -78,7 +70,7 @@ const Navbar = () => {
 
   return (
     <>
-    <header className={`fixed inset-x-0 top-0 z-50 border-b border-border bg-surface/90 backdrop-blur-xl transition-transform duration-300 ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+    <header className={`print:hidden fixed inset-x-0 top-0 z-50 border-b border-border bg-surface/90 backdrop-blur-xl transition-transform duration-300 ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
         <Link href={`/${locale}${isLoginRoute ? '/login' : '/dashboard'}`} className="flex min-w-0 items-center gap-2.5" aria-label={t('home')}>
           <Image src="/images-removebg-preview (1) (1).png" alt="Prankrataipittayakom crest" width={40} height={40} className="size-10 object-contain" priority />
@@ -91,13 +83,13 @@ const Navbar = () => {
         <div className="ml-auto flex items-center gap-2">
           {!isLoginRoute && (
             <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
-              <Link href={`/${locale}/dashboard`} className={navLinkClass(isDashboardRoute && !hash)}>
+              <Link href={`/${locale}/dashboard`} className={navLinkClass(isDashboardRoute)}>
                 <LayoutDashboard className="size-4" /> {t('overview')}
               </Link>
               <Link href={`/${locale}/schedule`} className={navLinkClass(isScheduleRoute)}>
                 <CalendarDays className="size-4" /> {t('schedule')}
               </Link>
-              <Link href={`/${locale}/dashboard#reports`} className={navLinkClass(isDashboardRoute && hash === '#reports')}>
+              <Link href={`/${locale}/reports`} className={navLinkClass(isReportsRoute)} aria-current={isReportsRoute ? 'page' : undefined}>
                 <ChartNoAxesColumn className="size-4" /> {t('reports')}
               </Link>
               <Link href={`/${locale}/account`} className={navLinkClass(isAccountRoute)}>
@@ -126,7 +118,7 @@ const Navbar = () => {
         </div>
       </div>
     </header>
-    {!isLoginRoute && <BottomNav isAdmin={isAdmin} isDashboardRoute={isDashboardRoute} isScheduleRoute={isScheduleRoute} isAccountRoute={isAccountRoute} isAdminRoute={isAdminRoute} hash={hash} />}
+    {!isLoginRoute && <BottomNav isAdmin={isAdmin} isDashboardRoute={isDashboardRoute} isScheduleRoute={isScheduleRoute} isAccountRoute={isAccountRoute} isAdminRoute={isAdminRoute} isReportsRoute={isReportsRoute} />}
     </>
   )
 }
@@ -137,14 +129,14 @@ const BottomNav = ({
   isScheduleRoute,
   isAccountRoute,
   isAdminRoute,
-  hash,
+  isReportsRoute,
 }: {
   isAdmin: boolean
   isDashboardRoute: boolean
   isScheduleRoute: boolean
   isAccountRoute: boolean
   isAdminRoute: boolean
-  hash: string
+  isReportsRoute: boolean
 }) => {
   const locale = useLocale()
   const t = useTranslations('nav')
@@ -158,11 +150,11 @@ const BottomNav = ({
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+      className="print:hidden fixed inset-x-0 bottom-0 z-50 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
       aria-label="Main navigation"
     >
       <div className="mx-auto flex max-w-7xl items-stretch gap-1 px-2 py-1.5">
-        <Link href={`/${locale}/dashboard`} className={itemClass(isDashboardRoute && !hash)} aria-current={isDashboardRoute && !hash ? 'page' : undefined}>
+        <Link href={`/${locale}/dashboard`} className={itemClass(isDashboardRoute)} aria-current={isDashboardRoute ? 'page' : undefined}>
           <LayoutDashboard className="size-5" />
           {t('overview')}
         </Link>
@@ -170,7 +162,7 @@ const BottomNav = ({
           <CalendarDays className="size-5" />
           {t('schedule')}
         </Link>
-        <Link href={`/${locale}/dashboard#reports`} className={itemClass(isDashboardRoute && hash === '#reports')} aria-current={isDashboardRoute && hash === '#reports' ? 'page' : undefined}>
+        <Link href={`/${locale}/reports`} className={itemClass(isReportsRoute)} aria-current={isReportsRoute ? 'page' : undefined}>
           <ChartNoAxesColumn className="size-5" />
           {t('reports')}
         </Link>
