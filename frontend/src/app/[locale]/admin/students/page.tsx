@@ -3,7 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertCircle, Check, Copy, GraduationCap, Pencil, Search, Trash2, UserPlus, X } from 'lucide-react'
+import { AlertCircle, Check, Copy, GraduationCap, Pencil, Search, Trash2, UserPlus } from 'lucide-react'
+import { AnimatePresence } from 'motion/react'
+import { StudentDetailsDialog } from '../components/StudentDetailsDialog'
+import { StudentEditDialog, type StudentEditValues } from '../components/StudentEditDialog'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DataUnavailableBanner, EmptyState, ErrorState, PageHeader } from '../components/AdminShell'
 import { createStudent, deleteStudentApi, fetchStudents, getApiErrorMessage, updateStudent, type Student } from '../lib/api'
@@ -12,7 +15,6 @@ const StudentsPage = () => {
   const locale = useLocale()
   const t = useTranslations('admin')
   const queryClient = useQueryClient()
-
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [firstName, setFirstName] = useState('')
@@ -20,10 +22,14 @@ const StudentsPage = () => {
   const [studentId, setStudentId] = useState('')
   const [classSection, setClassSection] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editValues, setEditValues] = useState({ firstName: '', lastName: '', studentId: '', classSection: '' })
+  const [editValues, setEditValues] = useState<StudentEditValues>({ firstName: '', lastName: '', studentId: '', classSection: '' })
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null)
   const [feedback, setFeedback] = useState<{ kind: 'error' | 'success'; message: string; card?: string } | null>(null)
+
+  const studentsQuery = useQuery({ queryKey: ['admin', 'students', search], queryFn: () => fetchStudents(search) })
+  const students = studentsQuery.data?.studentDataAvailable ? studentsQuery.data.students ?? [] : null
 
   useEffect(() => {
     const timeout = setTimeout(() => setSearch(searchInput.trim()), 300)
@@ -35,9 +41,6 @@ const StudentsPage = () => {
     const timeout = setTimeout(() => setFeedback(null), 4000)
     return () => clearTimeout(timeout)
   }, [feedback])
-
-  const studentsQuery = useQuery({ queryKey: ['admin', 'students', search], queryFn: () => fetchStudents(search) })
-  const students = studentsQuery.data?.studentDataAvailable ? studentsQuery.data.students ?? [] : null
 
   const addMutation = useMutation({
     mutationFn: () => createStudent(firstName.trim(), lastName.trim(), studentId.trim(), classSection.trim()),
@@ -60,7 +63,6 @@ const StudentsPage = () => {
       setFeedback({ kind: 'success', message: t('studentUpdated', { name: `${student.firstName} ${student.lastName}` }) })
       void queryClient.invalidateQueries({ queryKey: ['admin', 'students'] })
     },
-    onError: (error) => setFeedback({ kind: 'error', message: getApiErrorMessage(error) ?? t('loadError') }),
   })
 
   const deleteMutation = useMutation({
@@ -91,6 +93,7 @@ const StudentsPage = () => {
   }
 
   const beginEdit = (student: Student) => {
+    editMutation.reset()
     setEditingId(student.id)
     setEditValues({ firstName: student.firstName, lastName: student.lastName, studentId: student.studentId ?? '', classSection: student.classSection ?? '' })
   }
@@ -210,39 +213,52 @@ const StudentsPage = () => {
           ) : students.length === 0 ? (
             <EmptyState message={search ? t('noStudentsFound') : t('noStudents')} />
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-border bg-surface/85">
-              <table className="w-full min-w-[40rem] text-left text-sm">
+            <div className="student-table-container overflow-hidden rounded-lg border border-border bg-surface/85">
+              <table className="student-table w-full table-fixed text-left text-sm">
+                <colgroup>
+                  <col className="student-name-column" />
+                  <col className="student-id-column" />
+                  <col className="student-class-column" />
+                  <col className="student-uid-column" />
+                  <col className="student-added-column" />
+                  <col className="student-actions-column" />
+                </colgroup>
                 <thead>
                   <tr className="border-b border-border-soft text-xs uppercase text-text-faint">
-                    <th scope="col" className="px-4 py-3 font-bold">{t('student')}</th>
-                    <th scope="col" className="px-4 py-3 font-bold">{t('studentId')}</th>
-                    <th scope="col" className="px-4 py-3 font-bold">{t('classSection')}</th>
-                    <th scope="col" className="px-4 py-3 font-bold">{t('cardUid')}</th>
-                    <th scope="col" className="px-4 py-3 font-bold">{t('checkIns')}</th>
-                    <th scope="col" className="px-4 py-3 font-bold">{t('added')}</th>
-                    <th scope="col" className="px-4 py-3 text-right font-bold">{t('actions')}</th>
+                    <th scope="col" className="student-name-column px-2 py-3 font-bold sm:px-4">{t('student')}</th>
+                    <th scope="col" className="student-id-column whitespace-normal break-words px-2 py-3 font-bold leading-tight sm:px-4">{t('studentId')}</th>
+                    <th scope="col" className="student-class-column whitespace-nowrap px-2 py-3 font-bold sm:px-4">{t('classSection')}</th>
+                    <th scope="col" className="student-uid-column whitespace-nowrap px-2 py-3 font-bold sm:px-4">{t('cardUid')}</th>
+                    <th scope="col" className="student-added-column whitespace-nowrap px-4 py-3 font-bold">{t('added')}</th>
+                    <th scope="col" className="student-actions-column px-2 py-3 text-right sm:px-4"><span className="sr-only">{t('actions')}</span></th>
                   </tr>
                 </thead>
                 <tbody>
                   {students.map((student) => (
-                    <tr key={student.id} className="border-b border-border-soft last:border-0 hover:bg-surface-row">
-                      <td colSpan={editingId === student.id ? 6 : 1} className="px-4 py-3">
-                        {editingId === student.id ? <div className="flex flex-col gap-2 sm:flex-row"><input value={editValues.firstName} onChange={(event) => setEditValues({ ...editValues, firstName: event.target.value })} aria-label={t('firstName')} className="w-full rounded border border-border px-2 py-1 text-sm sm:w-32" /><input value={editValues.lastName} onChange={(event) => setEditValues({ ...editValues, lastName: event.target.value })} aria-label={t('lastName')} className="w-full rounded border border-border px-2 py-1 text-sm sm:w-32" /><input value={editValues.studentId} onChange={(event) => setEditValues({ ...editValues, studentId: event.target.value.replace(/[^0-9]/g, '') })} aria-label={t('studentId')} className="w-full rounded border border-border px-2 py-1 text-sm sm:w-32" /><input value={editValues.classSection} onChange={(event) => setEditValues({ ...editValues, classSection: event.target.value })} aria-label={t('classSection')} className="w-full rounded border border-border px-2 py-1 text-sm sm:w-24" /></div> : <div className="flex items-center gap-3">
+                    <tr
+                      key={student.id}
+                      onClick={(event) => {
+                        if (!(event.target as HTMLElement).closest('button')) setSelectedStudent(student)
+                      }}
+                      className="cursor-pointer border-b border-border-soft last:border-0 hover:bg-surface-row"
+                    >
+                      <td className="student-name-column min-w-0 px-2 py-3 sm:px-4">
+                        <div className="flex items-center gap-2 sm:gap-3">
                           <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-info-soft text-info">
                             <GraduationCap className="size-4" />
                           </span>
-                          <span className="font-bold">{student.firstName} {student.lastName}</span>
-                        </div>}
+                          <button type="button" onClick={() => setSelectedStudent(student)} aria-haspopup="dialog" className="min-w-0 truncate whitespace-nowrap text-left font-bold focus-visible:outline-2 focus-visible:outline-accent">{student.firstName} {student.lastName}</button>
+                        </div>
                       </td>
-                      {editingId !== student.id && <td className="px-4 py-3 tabular-nums text-text-secondary">{student.studentId ?? '—'}</td>}
-                      {editingId !== student.id && <td className="px-4 py-3 text-text-secondary">{student.classSection ?? '—'}</td>}
-                      {editingId !== student.id && <td className="px-4 py-3">
+                      <td className="student-id-column whitespace-nowrap px-2 py-3 tabular-nums text-text-secondary sm:px-4">{student.studentId ?? '—'}</td>
+                      <td className="student-class-column whitespace-nowrap px-2 py-3 text-text-secondary sm:px-4">{student.classSection ?? '—'}</td>
+                      <td className="student-uid-column whitespace-nowrap px-2 py-3 sm:px-4">
                         {student.uid_card ? (
                           <button
                             type="button"
                             onClick={() => void copyCard(student.id, student.uid_card)}
                             title={t('copyCardId')}
-                            className="flex items-center gap-2 rounded font-mono text-xs text-text-secondary transition hover:bg-surface-chip"
+                            className="flex max-w-full items-center gap-2 rounded font-mono text-xs text-text-secondary transition hover:bg-surface-chip"
                           >
                             <span className="truncate">{student.uid_card}</span>
                             {copiedId === student.id ? <Check className="size-3.5 shrink-0 text-accent-foreground" /> : <Copy className="size-3.5 shrink-0 text-text-faint" />}
@@ -250,20 +266,14 @@ const StudentsPage = () => {
                         ) : (
                           <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-semibold text-text-faint">{t('cardNotRegistered')}</span>
                         )}
-                      </td>}
-                      {editingId !== student.id && <td className="px-4 py-3 tabular-nums text-text-nav">{student._count.gateLogs + student._count.roomLogs}</td>}
-                      {editingId !== student.id && <td className="px-4 py-3 text-text-nav">
+                      </td>
+                      <td className="student-added-column whitespace-nowrap px-4 py-3 text-text-nav">
                         {new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(student.createdAt))}
-                      </td>}
-                      <td className="px-4 py-3">
+                      </td>
+                      <td className="student-actions-column whitespace-nowrap px-2 py-3 sm:px-4">
                         <div className="flex items-center justify-end gap-1">
-                          {editingId === student.id ? <>
-                            <button type="button" onClick={() => editMutation.mutate()} disabled={!editValues.firstName.trim() || !editValues.lastName.trim() || !/^\d+$/.test(editValues.studentId) || !editValues.classSection.trim() || editMutation.isPending} title={t('save')} aria-label={t('save')} className="rounded-md p-2 text-accent-foreground transition hover:bg-surface-active disabled:opacity-40"><Check className="size-4" /></button>
-                            <button type="button" onClick={() => setEditingId(null)} disabled={editMutation.isPending} title={t('cancel')} aria-label={t('cancel')} className="rounded-md p-2 text-text-secondary transition hover:bg-surface-active disabled:opacity-40"><X className="size-4" /></button>
-                          </> : <>
                             <button type="button" onClick={() => beginEdit(student)} title={t('editStudent')} aria-label={`${t('editStudent')} ${student.firstName} ${student.lastName}`} className="rounded-md p-2 text-text-secondary transition hover:bg-surface-active hover:text-accent-foreground"><Pencil className="size-4" /></button>
                             <button type="button" onClick={() => setStudentToDelete(student)} title={t('deleteStudent')} aria-label={`${t('deleteStudent')} ${student.firstName} ${student.lastName}`} className="rounded-md p-2 text-danger-foreground transition hover:bg-danger-soft"><Trash2 className="size-4" /></button>
-                          </>}
                         </div>
                       </td>
                     </tr>
@@ -274,6 +284,26 @@ const StudentsPage = () => {
           )}
         </>
       )}
+
+      <AnimatePresence>
+        {selectedStudent && (
+          <StudentDetailsDialog key={selectedStudent.id} student={selectedStudent} onClose={() => setSelectedStudent(null)} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {editingId !== null && (
+          <StudentEditDialog
+            key={editingId}
+            values={editValues}
+            onChange={setEditValues}
+            busy={editMutation.isPending}
+            error={editMutation.isError ? getApiErrorMessage(editMutation.error) ?? t('loadError') : null}
+            onSave={() => editMutation.mutate()}
+            onCancel={() => setEditingId(null)}
+          />
+        )}
+      </AnimatePresence>
 
       <ConfirmDialog
         open={studentToDelete !== null}

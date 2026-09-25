@@ -186,6 +186,8 @@
     "noStudentsFound": "No students match your search.",
     "copyCardId": "Copy card UID",
     "copyFailed": "Could not copy to clipboard.",
+    "studentDetails": "Student details",
+    "closeStudentDetails": "Close",
     "editStudent": "Edit student",
     "deleteStudent": "Delete student",
     "save": "Save",
