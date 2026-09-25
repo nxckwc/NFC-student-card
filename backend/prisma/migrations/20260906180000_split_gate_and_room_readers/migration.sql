@@ -1,0 +1,2 @@
+-- No schema changes are required here because the reader tables are already
+-- represented by the existing database schema.

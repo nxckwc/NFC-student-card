@@ -5,7 +5,7 @@ import  Link  from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
 import axios from 'axios';
-import { CalendarDays, ChartNoAxesColumn, Languages, LayoutDashboard, UserCog } from 'lucide-react';
+import { CalendarDays, ChartNoAxesColumn, Languages, LayoutDashboard, UserCog, UserRound } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100').replace(/\/+$/, '');
@@ -14,6 +14,8 @@ const Navbar = () => {
   const pathname = usePathname();
   const isLoginRoute = pathname.endsWith('/login');
   const isDashboardRoute = pathname.endsWith('/dashboard');
+  const isScheduleRoute = pathname.endsWith('/schedule');
+  const isAccountRoute = pathname.endsWith('/account');
   const isAdminRoute = /^\/(en|th)\/admin/.test(pathname);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isNavVisible, setIsNavVisible] = useState(true);
@@ -75,6 +77,7 @@ const Navbar = () => {
     }`;
 
   return (
+    <>
     <header className={`fixed inset-x-0 top-0 z-50 border-b border-border bg-surface/90 backdrop-blur-xl transition-transform duration-300 ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
         <Link href={`/${locale}${isLoginRoute ? '/login' : '/dashboard'}`} className="flex min-w-0 items-center gap-2.5" aria-label={t('home')}>
@@ -91,11 +94,14 @@ const Navbar = () => {
               <Link href={`/${locale}/dashboard`} className={navLinkClass(isDashboardRoute && !hash)}>
                 <LayoutDashboard className="size-4" /> {t('overview')}
               </Link>
-              <Link href={`/${locale}/dashboard#schedule`} className={navLinkClass(isDashboardRoute && hash === '#schedule')}>
+              <Link href={`/${locale}/schedule`} className={navLinkClass(isScheduleRoute)}>
                 <CalendarDays className="size-4" /> {t('schedule')}
               </Link>
               <Link href={`/${locale}/dashboard#reports`} className={navLinkClass(isDashboardRoute && hash === '#reports')}>
                 <ChartNoAxesColumn className="size-4" /> {t('reports')}
+              </Link>
+              <Link href={`/${locale}/account`} className={navLinkClass(isAccountRoute)}>
+                <UserRound className="size-4" /> {t('account')}
               </Link>
               {isAdmin && (
                 <Link href={`/${locale}/admin`} className={navLinkClass(isAdminRoute)}>
@@ -120,6 +126,66 @@ const Navbar = () => {
         </div>
       </div>
     </header>
+    {!isLoginRoute && <BottomNav isAdmin={isAdmin} isDashboardRoute={isDashboardRoute} isScheduleRoute={isScheduleRoute} isAccountRoute={isAccountRoute} isAdminRoute={isAdminRoute} hash={hash} />}
+    </>
+  )
+}
+
+const BottomNav = ({
+  isAdmin,
+  isDashboardRoute,
+  isScheduleRoute,
+  isAccountRoute,
+  isAdminRoute,
+  hash,
+}: {
+  isAdmin: boolean
+  isDashboardRoute: boolean
+  isScheduleRoute: boolean
+  isAccountRoute: boolean
+  isAdminRoute: boolean
+  hash: string
+}) => {
+  const locale = useLocale()
+  const t = useTranslations('nav')
+
+  const itemClass = (active: boolean) =>
+    `flex flex-1 flex-col items-center gap-1 rounded-lg px-1 py-1.5 text-[11px] transition ${
+      active
+        ? 'bg-surface-active font-semibold text-accent-foreground'
+        : 'font-medium text-text-nav hover:bg-surface-hover'
+    }`
+
+  return (
+    <nav
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+      aria-label="Main navigation"
+    >
+      <div className="mx-auto flex max-w-7xl items-stretch gap-1 px-2 py-1.5">
+        <Link href={`/${locale}/dashboard`} className={itemClass(isDashboardRoute && !hash)} aria-current={isDashboardRoute && !hash ? 'page' : undefined}>
+          <LayoutDashboard className="size-5" />
+          {t('overview')}
+        </Link>
+        <Link href={`/${locale}/schedule`} className={itemClass(isScheduleRoute)} aria-current={isScheduleRoute ? 'page' : undefined}>
+          <CalendarDays className="size-5" />
+          {t('schedule')}
+        </Link>
+        <Link href={`/${locale}/dashboard#reports`} className={itemClass(isDashboardRoute && hash === '#reports')} aria-current={isDashboardRoute && hash === '#reports' ? 'page' : undefined}>
+          <ChartNoAxesColumn className="size-5" />
+          {t('reports')}
+        </Link>
+        <Link href={`/${locale}/account`} className={itemClass(isAccountRoute)} aria-current={isAccountRoute ? 'page' : undefined}>
+          <UserRound className="size-5" />
+            {t('account')}
+        </Link>
+        {isAdmin && (
+          <Link href={`/${locale}/admin`} className={itemClass(isAdminRoute)} aria-current={isAdminRoute ? 'page' : undefined}>
+            <UserCog className="size-5" />
+            {t('admin')}
+          </Link>
+        )}
+      </div>
+    </nav>
   )
 }
 

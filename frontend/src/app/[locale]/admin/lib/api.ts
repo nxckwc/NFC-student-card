@@ -26,12 +26,23 @@ export interface AccountDetail extends Account {
   scheduleEntries: ScheduleEntry[]
 }
 
+export interface OverviewGateLog {
+  inAt: string
+  inStatus: string
+  state: string
+  student: { firstName: string; lastName: string }
+}
+
 export interface AdminOverview {
   accounts: number
   students: number | null
   attendance: number | null
   scannedStudents: number | null
+  notScannedStudents: number | null
+  lateStudents: number | null
   scheduledAccounts: number
+  readers: number
+  recentGateLogs: OverviewGateLog[]
   studentDataAvailable: boolean
 }
 
@@ -40,6 +51,7 @@ export interface Student {
   studentId: string | null
   firstName: string
   lastName: string
+  classSection: string | null
   uid_card: string | null
   createdAt: string
   _count: { gateLogs: number; roomLogs: number }
@@ -74,6 +86,36 @@ export interface ReaderScanResult {
   room: { roomId: string; subject: string; className: string; period: number; presentAt: string } | null
   dryRun: boolean
   elapsedMs: number
+}
+
+export type StudentStatus = 'PRESENT' | 'LATE' | 'ABSENT'
+
+export interface NamelistStudent {
+  id: string
+  studentId: string | null
+  firstName: string
+  lastName: string
+  status: StudentStatus
+  presentAt: string | null
+}
+
+export interface NamelistData {
+  entry: { id: number; subject: string; className: string; roomId: string; period: number; startTime: string; endTime: string }
+  students: NamelistStudent[]
+}
+
+export const fetchNamelist = async (entryId: number): Promise<NamelistData> => {
+  const { data } = await axios.get<NamelistData>(`${API_BASE_URL}/dashboard/namelist/${entryId}`, { withCredentials: true })
+  return data
+}
+
+export const setNamelistStudentStatus = async (entryId: number, studentId: string, status: StudentStatus) => {
+  const { data } = await axios.patch<{ studentId: string; status: StudentStatus; presentAt: string | null }>(
+    `${API_BASE_URL}/dashboard/namelist/${entryId}/students/${studentId}`,
+    { status },
+    { withCredentials: true },
+  )
+  return data
 }
 
 export interface ReaderStudent {
@@ -150,9 +192,18 @@ export const fetchStudents = async (search: string): Promise<{ students: Student
   return data
 }
 
-export const createStudent = async (firstName: string, lastName: string, studentId: string): Promise<Student> => {
-  const { data } = await axios.post<Student>(`${API_BASE_URL}/student`, { firstName, lastName, studentId }, { withCredentials: true })
+export const createStudent = async (firstName: string, lastName: string, studentId: string, classSection: string): Promise<Student> => {
+  const { data } = await axios.post<Student>(`${API_BASE_URL}/student`, { firstName, lastName, studentId, classSection }, { withCredentials: true })
   return data
+}
+
+export const updateStudent = async (id: string, firstName: string, lastName: string, studentId: string, classSection: string): Promise<Student> => {
+  const { data } = await axios.patch<Student>(`${API_BASE_URL}/admin/students/${id}`, { firstName, lastName, studentId, classSection }, { withCredentials: true })
+  return data
+}
+
+export const deleteStudentApi = async (id: string): Promise<void> => {
+  await axios.delete(`${API_BASE_URL}/admin/students/${id}`, { withCredentials: true })
 }
 
 export const fetchAttendance = async (

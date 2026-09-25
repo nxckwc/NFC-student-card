@@ -33,6 +33,10 @@ const isNumericId = (value: string): boolean => /^\d+$/.test(value)
  *                 type: string
  *                 description: Official school student ID (numeric)
  *                 example: "123456"
+ *               classSection:
+ *                 type: string
+ *                 description: Class and section (e.g. "M.5/3")
+ *                 example: "M.5/3"
  *     responses:
  *       201:
  *         description: Student created successfully (no card yet)
@@ -45,7 +49,7 @@ const isNumericId = (value: string): boolean => /^\d+$/.test(value)
  */
 export const createStudent = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { firstName, lastName, studentId } = req.body as CreateStudentRequestBody
+    const { firstName, lastName, studentId, classSection } = req.body as CreateStudentRequestBody
 
     if (!firstName || !lastName || !studentId) {
       res.status(400).json({ error: 'Missing data about student' })
@@ -71,7 +75,8 @@ export const createStudent = async (req: Request, res: Response): Promise<void> 
       data: {
         firstName,
         lastName,
-        studentId: trimmedStudentId
+        studentId: trimmedStudentId,
+        classSection: classSection?.trim() || null
       }
     })
     res.status(201).json(student)

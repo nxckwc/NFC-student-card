@@ -1,0 +1,2 @@
+-- No schema changes are required here because the nullable student ID and UID
+-- columns are already represented by the existing database schema.

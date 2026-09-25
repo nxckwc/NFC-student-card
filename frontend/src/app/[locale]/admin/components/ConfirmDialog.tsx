@@ -36,7 +36,7 @@ export const ConfirmDialog = ({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
         >
-          <div className="absolute inset-0 bg-text-primary/40 backdrop-blur-sm" onClick={busy ? undefined : onCancel} />
+          <div className="absolute inset-0 bg-dialog-backdrop backdrop-blur-sm" onClick={busy ? undefined : onCancel} />
           <motion.div
             className="relative w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-[0_20px_50px_rgba(38,51,46,0.25)]"
             initial={{ opacity: 0, scale: 0.95, y: 12 }}

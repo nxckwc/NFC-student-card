@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma.js'
 import { getAuthTokenFromCookies } from '../utils/cookie.js'
 import type { JwtPayload } from '../interfaces/auth.js'
+import { publishEntryStatus } from '../lib/realtime.js'
 
 const getAdmin = (req: Request): JwtPayload | null => {
   const token = getAuthTokenFromCookies(req)
@@ -99,7 +100,7 @@ const scanGate = async (readerId: string, studentId: string, now: Date) => {
   const inStatus = zoned.minutes < cutoff ? 'IN' : 'LATE'
   const date = dayStartUtc(zoned.dateKey)
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const existing = await tx.gateLog.findUnique({ where: { studentId_date: { studentId, date } } })
     if (!existing) {
       const log = await tx.gateLog.create({ data: { studentId, readerId, date, state: 'IN', inStatus, inAt: now, firstInAt: now } })
@@ -112,6 +113,8 @@ const scanGate = async (readerId: string, studentId: string, now: Date) => {
     const log = await tx.gateLog.update({ where: { id: existing.id }, data: { state: 'IN', inStatus, inAt: now, readerId } })
     return { log, action: 'IN' as const, created: false }
   })
+
+  return result
 }
 
 const scanRoom = async (readerId: string, studentId: string, now: Date) => {
@@ -133,16 +136,22 @@ const scanRoom = async (readerId: string, studentId: string, now: Date) => {
 
   const entry = activeEntries[0]
   if (!entry) throw new Error('No active class schedule for this room reader')
+  const status = zoned.minutes > (parseClock(entry.startTime) ?? zoned.minutes) ? 'LATE' : 'PRESENT'
   const key = { studentId, roomId: entry.roomId, subject: entry.subject, period: entry.period, date }
   const existing = await prisma.roomLog.findUnique({ where: { studentId_roomId_subject_period_date: key } })
-  if (existing) return { log: existing, created: false, entry }
+  if (existing) {
+    publishEntryStatus(entry.id, { type: 'status', studentId, status: existing.status === 'LATE' ? 'LATE' : 'PRESENT', presentAt: existing.presentAt.toISOString() })
+    return { log: existing, created: false, entry }
+  }
 
   try {
-    const log = await prisma.roomLog.create({ data: { studentId, readerId, date, weekday: entry.weekday, period: entry.period, subject: entry.subject, className: entry.className, roomId: entry.roomId, presentAt: now } })
+    const log = await prisma.roomLog.create({ data: { studentId, readerId, date, weekday: entry.weekday, period: entry.period, subject: entry.subject, className: entry.className, roomId: entry.roomId, status, presentAt: now } })
+    publishEntryStatus(entry.id, { type: 'status', studentId, status, presentAt: log.presentAt.toISOString() })
     return { log, created: true, entry }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       const log = await prisma.roomLog.findUniqueOrThrow({ where: { studentId_roomId_subject_period_date: key } })
+      publishEntryStatus(entry.id, { type: 'status', studentId, status: log.status === 'LATE' ? 'LATE' : 'PRESENT', presentAt: log.presentAt.toISOString() })
       return { log, created: false, entry }
     }
     throw error

@@ -40,10 +40,15 @@
   --warning-soft: #f4edcf;
   --info: #426778;
   --info-soft: #e0ecf3;
+  --purple: #7a5cc4;
+  --purple-foreground: #5d43a0;
+  --purple-soft: #efeafb;
+  --success: #3f7565;
   --neutral: #bcc8c0;
   --skeleton: #dfe7e1;
   --scrollbar: #a9bdb1;
   --grid-line: #e9e3dd;
+  --dialog-backdrop: rgba(38, 51, 46, 0.28);
 }
 
 .dark {
@@ -86,10 +91,15 @@
   --warning-soft: #33290f;
   --info: #7fb0c9;
   --info-soft: #16282f;
+  --purple: #a78bfa;
+  --purple-foreground: #c4b0f5;
+  --purple-soft: #2a2140;
+  --success: #4f9a83;
   --neutral: #3a4a41;
   --skeleton: #22302a;
   --scrollbar: #3a4a41;
   --grid-line: #26332c;
+  --dialog-backdrop: rgba(0, 0, 0, 0.58);
 }
 
 @theme inline {
@@ -132,9 +142,14 @@
   --color-warning-soft: var(--warning-soft);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
+  --color-purple: var(--purple);
+  --color-purple-foreground: var(--purple-foreground);
+  --color-purple-soft: var(--purple-soft);
+  --color-success: var(--success);
   --color-neutral: var(--neutral);
   --color-skeleton: var(--skeleton);
   --color-scrollbar: var(--scrollbar);
+  --color-dialog-backdrop: var(--dialog-backdrop);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -144,6 +159,14 @@ body {
   color: var(--foreground);
   margin: 0;
   min-height: 100vh;
+}
+
+.thai-content {
+  font-family: var(--font-noto-serif-thai), var(--font-ibm-plex-sans), sans-serif;
+}
+
+.thai-content :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-ibm-plex-sans), sans-serif;
 }
 
 button,
