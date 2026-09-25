@@ -201,3 +201,122 @@ input:focus-visible {
   background-image: linear-gradient(to right, var(--grid-line) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
   background-size: 56px 56px;
 }
+
+/* The student list hides complete columns at fixed container breakpoints.
+   Keeping this CSS-only prevents resize feedback loops and leaves the name
+   column enough room to remain on one line. */
+.student-table .student-uid-column,
+.student-table .student-added-column {
+  display: none;
+}
+
+.student-table .student-name-column {
+  width: 48%;
+}
+
+.student-table .student-id-column {
+  width: 24%;
+}
+
+.student-table thead .student-id-column {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.15;
+}
+
+.student-table .student-class-column {
+  width: 16%;
+}
+
+.student-table .student-actions-column {
+  width: 12%;
+}
+
+@media (min-width: 640px) {
+  .student-table .student-uid-column {
+    display: table-cell;
+  }
+
+  .student-table .student-name-column {
+    width: 34%;
+  }
+
+  .student-table .student-id-column {
+    width: 18%;
+  }
+
+  .student-table .student-class-column {
+    width: 14%;
+  }
+
+  .student-table .student-uid-column {
+    width: 18%;
+  }
+
+  .student-table .student-actions-column {
+    width: 16%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .student-table .student-added-column {
+    display: table-cell;
+  }
+
+  .student-table .student-name-column {
+    width: 28%;
+  }
+
+  .student-table .student-id-column {
+    width: 18%;
+  }
+
+  .student-table .student-class-column {
+    width: 14%;
+  }
+
+  .student-table .student-uid-column {
+    width: 16%;
+  }
+
+  .student-table .student-added-column {
+    width: 16%;
+  }
+
+  .student-table .student-actions-column {
+    width: 8%;
+  }
+}
+
+/* On very narrow student-list containers, keep the primary identity usable
+   instead of squeezing every field into unreadable slivers. This comes after
+   viewport rules so it also wins when a narrow container exists in a wider
+   viewport, such as beside a sidebar. */
+.student-table-container {
+  container-type: inline-size;
+  container-name: student-list;
+}
+
+@container student-list (max-width: 380px) {
+  .student-table .student-id-column,
+  .student-table .student-class-column,
+  .student-table .student-uid-column,
+  .student-table .student-added-column {
+    display: none;
+  }
+
+  .student-table .student-name-column {
+    display: table-cell;
+    width: 88%;
+  }
+
+  .student-table .student-actions-column {
+    display: table-cell;
+    width: 12%;
+    white-space: nowrap;
+  }
+
+  .student-table .student-name-column button {
+    max-width: 100%;
+  }
+}

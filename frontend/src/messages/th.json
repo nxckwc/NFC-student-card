@@ -224,6 +224,8 @@
     "noStudentsFound": "ไม่พบนักเรียนที่ตรงกับคำค้นหา",
     "copyCardId": "คัดลอกรหัสบัตร",
     "copyFailed": "ไม่สามารถคัดลอกได้",
+    "studentDetails": "ข้อมูลนักเรียน",
+    "closeStudentDetails": "ปิด",
     "editStudent": "แก้ไขข้อมูลนักเรียน",
     "deleteStudent": "ลบนักเรียน",
     "save": "บันทึก",
