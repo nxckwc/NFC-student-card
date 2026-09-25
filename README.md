@@ -114,8 +114,6 @@ NEXT_PUBLIC_API_URL=http://localhost:3100
 | Service | Local address |
 | --- | --- |
 | Web application | [localhost:3000](http://localhost:3000) |
-| English login | [localhost:3000/en/login](http://localhost:3000/en/login) |
-| Thai login | [localhost:3000/th/login](http://localhost:3000/th/login) |
 | API | [localhost:3100](http://localhost:3100) |
 | Swagger UI in development | [localhost:3100/api-docs](http://localhost:3100/api-docs) |
 
