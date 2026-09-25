@@ -134,7 +134,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   if (!secret) throw new Error('JWT_SECRET is not defined')
 
   const token = jwt.sign(
-    { id: user.id, username: user.username, role: user.role },
+    { id: user.id, username: user.username, role: user.role, rememberMe: Boolean(rememberMe) },
     secret,
     { expiresIn: '1h' }
   )
@@ -155,13 +155,87 @@ export const session = async (req: Request, res: Response): Promise<void> => {
 
   try {
     const payload = jwt.verify(token, secret) as JwtPayload
+    const user = await prisma.user.findUnique({
+      where: { id: payload.id },
+      select: { id: true, username: true, role: true },
+    })
+
+    if (!user) {
+      clearAuthCookie(res)
+      res.status(401).json({ message: 'Unauthorized' })
+      return
+    }
+
+    if (user.username !== payload.username || user.role !== payload.role) {
+      const refreshedToken = jwt.sign(
+        { id: user.id, username: user.username, role: user.role, rememberMe: payload.rememberMe !== false },
+        secret,
+        { expiresIn: '1h' },
+      )
+      setAuthCookie(res, refreshedToken, payload.rememberMe !== false)
+    }
+
     res.json({
       authenticated: true,
       user: {
-        id: payload.id,
-        username: payload.username,
-        role: payload.role
+        id: user.id,
+        username: user.username,
+        role: user.role
       }
+    })
+  } catch {
+    clearAuthCookie(res)
+    res.status(401).json({ message: 'Unauthorized' })
+  }
+}
+
+export const updateProfile = async (req: Request, res: Response): Promise<void> => {
+  const token = getAuthTokenFromCookies(req)
+  if (!token) {
+    res.status(401).json({ message: 'Unauthorized' })
+    return
+  }
+
+  const secret = process.env['JWT_SECRET']
+  if (!secret) throw new Error('JWT_SECRET is not defined')
+
+  try {
+    const payload = jwt.verify(token, secret) as JwtPayload
+    const newUsername = (req.body?.username ?? '').toString().trim()
+
+    if (!newUsername) {
+      res.status(400).json({ message: 'Username is required' })
+      return
+    }
+
+    if (newUsername.length < 3 || newUsername.length > 30) {
+      res.status(400).json({ message: 'Username must be between 3 and 30 characters' })
+      return
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { username: newUsername } })
+    if (existingUser && existingUser.id !== payload.id) {
+      res.status(409).json({ message: 'Username is already taken' })
+      return
+    }
+
+    const user = await prisma.user.update({
+      where: { id: payload.id },
+      data: { username: newUsername },
+      select: { id: true, username: true, role: true },
+    })
+
+    const refreshedToken = jwt.sign(
+      { id: user.id, username: user.username, role: user.role, rememberMe: payload.rememberMe !== false },
+      secret,
+      { expiresIn: '1h' },
+    )
+    setAuthCookie(res, refreshedToken, payload.rememberMe !== false)
+
+    res.json({
+      id: user.id,
+      username: user.username,
+      role: user.role,
     })
   } catch {
     clearAuthCookie(res)

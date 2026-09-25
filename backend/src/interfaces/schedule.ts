@@ -7,4 +7,5 @@ export interface ScheduleEntryResponse {
   roomId: string;
   startTime: string;
   endTime: string;
+  attendanceStatus: 'FUTURE' | 'PENDING' | 'COMPLETED';
 }

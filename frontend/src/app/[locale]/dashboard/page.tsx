@@ -2,17 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { useLocale, useTranslations } from 'next-intl'
+import { AnimatePresence, motion } from 'motion/react'
 import {
-  BookOpen24Regular,
-  ChevronRight20Regular,
-  DataHistogram24Regular,
-  DoorArrowLeft24Regular,
   PersonAccounts24Filled,
-  PersonAccounts24Regular,
 } from '@fluentui/react-icons'
-import { AlertCircle, CalendarDays, Clock3, MapPin, RefreshCw } from 'lucide-react'
+import { AlertCircle, ArrowUpRight, CalendarDays, Check, ChevronRight, Clock3, MapPin, RefreshCw, Sparkles } from 'lucide-react'
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100').replace(/\/+$/, '')
 
@@ -30,27 +28,21 @@ interface ScheduleEntry {
 }
 
 interface SessionResponse {
-  user: { username: string }
+  user: { username: string; role: string }
 }
 
-const getDashboardData = async (): Promise<{ schedule: ScheduleEntry[]; username: string }> => {
-  const [scheduleResponse, sessionResponse] = await Promise.all([
-    axios.get<{ schedule: ScheduleEntry[] }>(`${API_BASE_URL}/dashboard/schedule`, { withCredentials: true }),
-    axios.get<SessionResponse>(`${API_BASE_URL}/auth/session`, { withCredentials: true }),
-  ])
+const getDashboardData = async (): Promise<{ schedule: ScheduleEntry[]; username: string; role: string }> => {
+  const sessionResponse = await axios.get<SessionResponse>(`${API_BASE_URL}/auth/session`, { withCredentials: true })
+  const scheduleResponse = sessionResponse.data.user.role === 'USER'
+    ? { data: { schedule: [] } }
+    : await axios.get<{ schedule: ScheduleEntry[] }>(`${API_BASE_URL}/dashboard/schedule`, { withCredentials: true })
 
   return {
     schedule: scheduleResponse.data.schedule,
     username: sessionResponse.data.user.username,
+    role: sessionResponse.data.user.role,
   }
 }
-
-const reportScopes = [
-  { id: 'arrival', icon: <DoorArrowLeft24Regular className="size-5" />, color: 'bg-[#f9e8e4] text-[#a95047]' },
-  { id: 'student', icon: <PersonAccounts24Regular className="size-5" />, color: 'bg-[#deece4] text-[#356b5c]' },
-  { id: 'class', icon: <DataHistogram24Regular className="size-5" />, color: 'bg-[#e0ecf3] text-[#426778]' },
-  { id: 'subject', icon: <BookOpen24Regular className="size-5" />, color: 'bg-[#f4edcf] text-[#7a682d]' },
-]
 
 const currentWeekday = (): number => {
   const day = new Date().getDay()
@@ -64,6 +56,7 @@ const toMinutes = (time: string): number => {
 
 function DashboardContent() {
   const locale = useLocale()
+  const router = useRouter()
   const t = useTranslations('dashboard')
   const [selectedDay, setSelectedDay] = useState(currentWeekday)
   const [currentTime, setCurrentTime] = useState(() => new Date())
@@ -71,6 +64,7 @@ function DashboardContent() {
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ['dashboard-schedule'],
     queryFn: getDashboardData,
+    refetchInterval: 5000,
   })
 
   const selectedLessons = (data?.schedule ?? []).filter((entry) => entry.weekday === selectedDay)
@@ -89,61 +83,97 @@ function DashboardContent() {
     && currentMinutes < toMinutes(lesson.endTime)
   )
 
+  const todayLessons = (data?.schedule ?? []).filter((entry) => entry.weekday === currentWeekday()).sort((a, b) => a.period - b.period)
+  const currentLesson = todayLessons.find(isCurrentLesson)
+  const nextLesson = todayLessons.find((lesson) => toMinutes(lesson.startTime) > currentMinutes)
+  const completedToday = todayLessons.filter((lesson) => toMinutes(lesson.endTime) <= currentMinutes).length
+  const lessonProgress = currentLesson
+    ? Math.min(100, Math.max(0, ((currentMinutes - toMinutes(currentLesson.startTime)) / (toMinutes(currentLesson.endTime) - toMinutes(currentLesson.startTime))) * 100))
+    : 0
+
+  if (data?.role === 'USER') {
+    return (
+      <AnimatePresence mode="wait">
+        <motion.main
+          key="student-dashboard"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -18 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="relative min-h-screen overflow-hidden bg-background px-4 pb-14 pt-24 text-text-primary sm:px-6 lg:px-8"
+        >
+        <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle,rgba(112,139,122,0.16)_1px,transparent_1px)] bg-size-[24px_24px]" />
+        <div className="relative mx-auto flex min-h-[calc(100vh-8rem)] max-w-5xl items-center">
+          <motion.section
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1, duration: 0.35, ease: 'easeOut' }}
+            className="grid w-full overflow-hidden rounded-lg border border-border bg-surface shadow-[0_18px_50px_rgba(52,92,70,0.1)] md:grid-cols-[1.2fr_0.8fr]"
+          >
+            <div className="p-8 sm:p-12">
+              <span className="mb-8 inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-accent-foreground"><Sparkles className="size-3.5" /> {t('workspace')}</span>
+              <h1 className="max-w-lg text-4xl font-bold leading-tight text-text-primary sm:text-5xl">{t('welcome', { username: data?.username ?? 'Student' })}</h1>
+              <p className="mt-4 max-w-md text-base leading-7 text-text-secondary">{t('noPeriods', { day: selectedDayLabel })}</p>
+              <div className="mt-10 flex items-center gap-3 text-sm font-semibold text-text-muted"><CalendarDays className="size-4 text-danger-accent" /> {dateLabel}</div>
+            </div>
+            <div className="flex flex-col justify-between bg-accent p-8 text-white sm:p-12">
+              <PersonAccounts24Filled className="size-10 opacity-70" />
+              <div><p className="text-sm font-medium text-white/70">{t('insights')}</p><p className="mt-2 text-2xl font-bold">{t('scheduleStatus')}</p><p className="mt-3 text-sm leading-6 text-white/75">{t('weeklySchedule')}</p></div>
+            </div>
+          </motion.section>
+        </div>
+        </motion.main>
+      </AnimatePresence>
+    )
+  }
+
   return (
-    <main className="relative min-h-screen bg-[#f4f7f3] px-4 pb-14 pt-24 text-[#26332e] sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgba(112,139,122,0.16)_1px,transparent_1px)] bg-size-[24px_24px]" />
-      <div className="relative mx-auto max-w-7xl">
-        <section className="mb-10 flex flex-col gap-5 border-b border-[#dce5de] pb-8 sm:flex-row sm:items-end sm:justify-between" aria-labelledby="dashboard-title">
-          <div className="flex items-center gap-3">
-            <div className="relative flex size-12 shrink-0 items-center justify-center rounded-lg bg-[#deece4] text-[#356b5c]">
-              <PersonAccounts24Filled className="size-6" />
-              <span className="absolute -right-1 -top-1 size-3 rotate-12 rounded-sm bg-[#e47769]" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-[#748078]">{t('workspace')}</p>
-              <h1 id="dashboard-title" className="text-2xl font-bold text-[#26332e]">{t('welcome', { username: data?.username ?? 'Admin' })}</h1>
-            </div>
-          </div>
-          <p className="text-sm font-medium text-[#748078]">{t('today', { date: dateLabel })}</p>
+    <AnimatePresence mode="wait">
+      <motion.main
+        key="staff-dashboard"
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -18 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="relative min-h-screen overflow-x-hidden bg-background px-4 pb-14 pt-24 text-text-primary sm:px-6 lg:flex lg:h-dvh lg:min-h-0 lg:flex-col lg:overflow-hidden lg:px-8 lg:pb-6"
+      >
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle,rgba(112,139,122,0.16)_1px,transparent_1px)] bg-size-[24px_24px]" />
+      <div className="relative mx-auto flex min-h-0 w-full max-w-7xl min-w-0 flex-1 flex-col">
+        <section className="mb-5 flex items-center justify-between gap-4 border-b border-border pb-3" aria-labelledby="dashboard-title">
+          <div className="flex min-w-0 items-center gap-3"><span className="h-8 w-1 shrink-0 rounded-full bg-danger-accent" /><div className="min-w-0"><h1 id="dashboard-title" className="truncate text-lg font-bold text-text-primary sm:text-xl">{t('currentPeriod')}</h1><p className="truncate text-xs text-text-muted">{t('today', { date: dateLabel })}</p></div></div>
+          
         </section>
 
-        <section id="schedule" className="scroll-mt-24" aria-labelledby="schedule-title">
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="mb-1 flex items-center gap-2 text-xs font-bold uppercase text-[#d05f54]"><CalendarDays className="size-4" /> {t('weeklySchedule')}</p>
-              <h2 id="schedule-title" className="text-2xl font-bold text-[#26332e]">{selectedDayLabel}</h2>
-            </div>
-            <span className="text-sm text-[#748078]">{t('periodCount', { count: selectedLessons.length })}</span>
+        <section className="mb-8 grid gap-4 lg:grid-cols-[1.45fr_0.55fr]" aria-label={t('insights')}>
+          <div className="relative overflow-hidden rounded-lg bg-accent p-6 text-white shadow-[0_16px_34px_rgba(52,92,70,0.16)] sm:p-8">
+            <div className="absolute -right-8 -top-12 size-48 rounded-full border-[24px] border-white/10" />
+            <div className="relative flex h-full flex-col justify-between gap-10"><div className="flex items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-white/65">{currentLesson ? t('current') : t('scheduleStatus')}</p><h2 className="mt-3 text-3xl font-bold sm:text-4xl">{currentLesson?.subject ?? nextLesson?.subject ?? t('noPeriods', { day: t(`days.${currentWeekday()}.full`) })}</h2></div><Clock3 className="size-8 text-white/60" /></div><div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-sm text-white/70">{currentLesson ? `${currentLesson.startTime} - ${currentLesson.endTime}` : nextLesson ? `${t('statusFuture')} · ${nextLesson.startTime}` : t('weeklySchedule')}</p>{currentLesson && <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold"><MapPin className="size-4" /> {t('room', { id: currentLesson.roomId })}</p>}</div><div className="min-w-40"><div className="mb-2 flex justify-between text-xs font-bold text-white/70"><span>{currentLesson ? t('lessonProgress') : t('statusFuture')}</span><span>{currentLesson ? `${Math.round(lessonProgress)}%` : '0%'}</span></div><div className="h-2 overflow-hidden rounded-full bg-black/15"><div className="h-full rounded-full bg-danger-accent" style={{ width: `${currentLesson ? lessonProgress : 0}%` }} /></div></div></div></div>
           </div>
+          <Link href={currentLesson ? `/${locale}/namelist/${currentLesson.id}` : `/${locale}/schedule`} className="rounded-lg border border-border bg-surface p-6 shadow-sm"><div className="mb-8 flex items-center justify-between"><span className="flex size-10 items-center justify-center rounded-lg bg-danger-soft text-danger-foreground"><CalendarDays className="size-5" /></span><ArrowUpRight className="size-4 text-text-faint" /></div><p className="text-xs font-bold uppercase tracking-wide text-text-muted">{t('periodCount', { count: todayLessons.length })}</p><p className="mt-2 text-3xl font-bold text-text-primary">{completedToday} <span className="text-base font-medium text-text-muted">/ {todayLessons.length || 0}</span></p><p className="mt-1 text-sm text-text-secondary">{t(`days.${currentWeekday()}.full`)}</p></Link>
+        </section>
 
-          <div className="mb-5 grid grid-cols-7 gap-1 rounded-lg border border-[#dce5de] bg-white/80 p-1 shadow-[0_4px_18px_rgba(52,76,61,0.04)]" role="tablist" aria-label={t('selectDay')}>
-            {days.map((day) => (
-              <button
-                key={day}
-                type="button"
-                role="tab"
-                aria-selected={selectedDay === day}
-                className={`min-w-0 rounded-md px-1 py-2.5 text-xs font-bold transition sm:px-3 sm:text-sm ${selectedDay === day ? 'bg-[#3f7565] text-white shadow-sm' : 'text-[#69766e] hover:bg-[#edf3ef]'}`}
-                onClick={() => setSelectedDay(day)}
-              >
-                {t(`days.${day}.short`)}
-              </button>
-            ))}
-          </div>
+        <section id="schedule" className="grid min-h-0 min-w-0 gap-8 lg:h-full lg:flex-1 lg:grid-cols-[minmax(0,1fr)_280px]" aria-labelledby="schedule-title">
+          <div className="min-w-0 lg:flex lg:h-full lg:min-h-0 lg:flex-1 lg:flex-col">
+            
+            <div className="mb-6 grid w-full grid-cols-7 border-b border-border" role="tablist" aria-label={t('selectDay')}>
+              {days.map((day) => <button key={day} type="button" role="tab" aria-selected={selectedDay === day} className={`relative min-w-0 px-0 pb-3 pt-1 text-center text-xs font-bold transition sm:px-2 sm:text-sm ${selectedDay === day ? 'text-accent-foreground after:absolute after:inset-x-1 after:bottom-0 after:h-0.5 after:bg-danger-accent sm:after:inset-x-2' : 'text-text-muted hover:text-text-primary'}`} onClick={() => setSelectedDay(day)}>{t(`days.${day}.short`)}</button>)}
+            </div>
 
           {isLoading ? (
-            <div className="schedule-rail flex snap-x gap-3 overflow-x-auto pb-4" aria-label={t('loading')}>
-              {Array.from({ length: 7 }, (_, index) => <div key={index} className="skeleton h-48 w-72 shrink-0 snap-start rounded-lg" />)}
+            <div className="schedule-rail min-h-0 space-y-3 rounded-lg border border-border bg-surface/45 p-3 pb-6 lg:flex-1 lg:overflow-y-auto lg:pr-2" aria-label={t('loading')}>
+              {Array.from({ length: 5 }, (_, index) => (
+                <div key={index} className="skeleton h-24 w-full rounded-lg" />
+              ))}
             </div>
           ) : error ? (
-            <div className="flex flex-col items-start gap-3 rounded-lg border border-[#e8bcb6] bg-[#fff8f6] p-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="flex items-center gap-2 text-sm font-medium text-[#99483f]"><AlertCircle className="size-5" />{t('loadError')}</p>
-              <button type="button" className="inline-flex items-center gap-2 rounded-md bg-[#d8675c] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b85349]" onClick={() => void refetch()}><RefreshCw className="size-4" />{t('retry')}</button>
+            <div className="flex flex-col items-start gap-3 rounded-lg border border-danger-border bg-danger-bg p-5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="flex items-center gap-2 text-sm font-medium text-danger-foreground"><AlertCircle className="size-5" />{t('loadError')}</p>
+              <button type="button" className="inline-flex items-center gap-2 rounded-md bg-danger px-3 py-2 text-sm font-semibold text-white hover:bg-danger-hover" onClick={() => void refetch()}><RefreshCw className="size-4" />{t('retry')}</button>
             </div>
           ) : selectedLessons.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[#c8d5cc] bg-white/70 px-5 py-12 text-center text-sm text-[#748078]">{t('noPeriods', { day: selectedDayLabel })}</div>
+            <div className="rounded-lg border border-dashed border-border-dashed bg-surface/70 px-5 py-12 text-center text-sm text-text-muted">{t('noPeriods', { day: selectedDayLabel })}</div>
           ) : (
-            <div className="schedule-rail flex snap-x gap-3 overflow-x-auto pb-4" aria-label={`${selectedDayLabel} ${t('weeklySchedule')}`}>
+            <div className="schedule-rail min-h-0 space-y-3 rounded-lg border border-border bg-surface/45 p-3 pb-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-2" aria-label={`${selectedDayLabel} ${t('weeklySchedule')}`}>
               {selectedLessons.map((lesson) => {
                 const isCurrent = isCurrentLesson(lesson)
                 const isSelected = selectedLessonId === lesson.id
@@ -155,49 +185,24 @@ function DashboardContent() {
                   disabled={!isCurrent}
                   aria-pressed={isSelected}
                   aria-label={`Period ${lesson.period}: ${lesson.subject}, ${isCurrent ? t('inProgress') : t('unavailable')}`}
-                  onClick={() => setSelectedLessonId(lesson.id)}
-                  className={`relative flex min-h-52 w-72 shrink-0 snap-start flex-col overflow-hidden rounded-lg border p-5 text-left transition ${isCurrent ? `border-[#8db7a2] bg-white shadow-[0_10px_28px_rgba(52,92,70,0.1)] ${isSelected ? 'ring-2 ring-[#3f7565] ring-offset-2 ring-offset-[#f4f7f3]' : 'hover:border-[#5f927e]'}` : 'cursor-not-allowed border-[#dce5de] bg-[#e9eeea] opacity-60 grayscale'}`}
+                  onClick={() => { setSelectedLessonId(lesson.id); router.push(`/${locale}/namelist/${lesson.id}`) }}
+                  className={`relative grid min-h-24 w-full grid-cols-[4.5rem_1fr_auto] items-center gap-3 overflow-hidden rounded-lg border p-4 text-left transition sm:grid-cols-[5.5rem_1fr_auto] sm:gap-5 ${isCurrent ? `border-accent-border bg-surface shadow-[0_10px_28px_rgba(52,92,70,0.1)] ${isSelected ? 'ring-2 ring-accent ring-offset-2 ring-offset-background' : 'hover:border-accent-border-hover'}` : 'cursor-not-allowed border-border bg-surface-muted opacity-60 grayscale'}`}
                 >
-                  <span className={`absolute inset-x-0 top-0 h-1 ${isCurrent ? 'bg-[#e47769]' : 'bg-[#bcc8c0]'}`} />
-                  <div className="flex items-start justify-between gap-3">
-                    <span className="rounded-md bg-[#edf3ef] px-2 py-1 text-xs font-bold text-[#52675c]">Period {lesson.period}</span>
-                    <span className="flex shrink-0 items-center gap-1 text-xs tabular-nums text-[#748078]"><Clock3 className="size-3.5" />{lesson.startTime} - {lesson.endTime}</span>
-                  </div>
-                  <div className="mt-7">
-                    <h3 className="text-xl font-bold text-[#26332e]">{lesson.subject}</h3>
-                    <p className="mt-1 text-sm text-[#69766e]">{t('class', { name: lesson.className })}</p>
-                  </div>
-                  <div className="mt-auto flex items-center justify-between gap-2 pt-6">
-                    <p className="flex items-center gap-1.5 text-xs font-semibold text-[#527263]"><MapPin className="size-3.5" />{t('room', { id: lesson.roomId })}</p>
-                    {isCurrent && <span className="rounded-md bg-[#e47769] px-2 py-1 text-xs font-bold text-white">{t('current')}</span>}
-                  </div>
+                  <span className={`absolute inset-y-0 left-0 w-1 ${isCurrent ? 'bg-danger-accent' : 'bg-neutral'}`} />
+                  <div className="border-r border-border-soft pr-3"><span className="block text-xs font-bold uppercase text-text-muted">Period</span><span className="text-xl font-bold text-text-primary">{lesson.period}</span><span className="mt-1 block text-xs tabular-nums text-text-muted">{lesson.startTime}</span></div>
+                  <div className="min-w-0"><h3 className="truncate text-lg font-bold text-text-primary">{lesson.subject}</h3><p className="mt-1 truncate text-sm text-text-secondary">{t('class', { name: lesson.className })} <span className="mx-1 text-text-faint">·</span> {t('room', { id: lesson.roomId })}</p></div>
+                  <div className="flex items-center gap-2 text-right">{isCurrent ? <span className="hidden rounded-md bg-danger-accent px-2 py-1 text-xs font-bold text-white sm:inline">{t('current')}</span> : <Check className="size-4 text-text-faint" />}<ChevronRight className="size-4 text-text-faint" /></div>
                 </button>
                 )
               })}
             </div>
           )}
-        </section>
-
-        <section id="reports" className="mt-12 scroll-mt-24" aria-labelledby="reports-title">
-          <div className="mb-4">
-            <p className="mb-1 text-xs font-bold uppercase text-[#d05f54]">{t('insights')}</p>
-            <h2 id="reports-title" className="text-2xl font-bold text-[#26332e]">{t('reports')}</h2>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {reportScopes.map((scope) => (
-              <button key={scope.id} className="group flex w-full items-center gap-4 rounded-lg border border-[#dce5de] bg-white/85 p-4 text-left transition hover:-translate-y-0.5 hover:border-[#b9cbc0] hover:shadow-[0_10px_24px_rgba(52,76,61,0.07)]" onClick={() => console.log('selected scope:', scope.id)}>
-                <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${scope.color}`}>{scope.icon}</div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-bold text-[#314038]">{t(`reportItems.${scope.id}.label`)}</h3>
-                  <p className="mt-0.5 text-xs text-[#748078]">{t(`reportItems.${scope.id}.description`)}</p>
-                </div>
-                <ChevronRight20Regular className="size-4 shrink-0 text-[#9aa89f] transition group-hover:translate-x-0.5 group-hover:text-[#d05f54]" />
-              </button>
-            ))}
-          </div>
+          
         </section>
       </div>
-    </main>
+      </motion.main>
+    </AnimatePresence>
   )
 }
 

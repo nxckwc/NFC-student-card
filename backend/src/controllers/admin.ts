@@ -55,15 +55,16 @@ const getPeriodTime = (period: number): { startTime: string; endTime: string } =
 export const getAdminOverview = async (req: Request, res: Response): Promise<void> => {
   if (!requireAdmin(req, res)) return
 
-  const [accounts, scheduledAccounts] = await prisma.$transaction([
+  const [accounts, scheduledAccounts, readers] = await prisma.$transaction([
     prisma.user.count(),
     prisma.user.count({ where: { scheduleEntries: { some: {} } } }),
+    prisma.reader.count({ where: { active: true } }),
   ])
 
   try {
     const startOfDay = new Date()
     startOfDay.setHours(0, 0, 0, 0)
-    const [students, gateAttendance, roomAttendance, gateStudents] = await prisma.$transaction([
+    const [students, gateAttendance, roomAttendance, gateStudents, lateStudents, recentGateLogs] = await prisma.$transaction([
       prisma.student.count(),
       prisma.gateLog.count(),
       prisma.roomLog.count(),
@@ -72,12 +73,39 @@ export const getAdminOverview = async (req: Request, res: Response): Promise<voi
         distinct: ['studentId'],
         select: { studentId: true },
       }),
+      prisma.gateLog.count({ where: { date: { gte: startOfDay }, inStatus: 'LATE' } }),
+      prisma.gateLog.findMany({
+        where: { date: { gte: startOfDay } },
+        orderBy: { inAt: 'desc' },
+        take: 6,
+        select: {
+          inAt: true,
+          inStatus: true,
+          state: true,
+          student: { select: { firstName: true, lastName: true } },
+        },
+      }),
     ])
     const attendance = gateAttendance + roomAttendance
-    res.json({ overview: { accounts, students, attendance, scannedStudents: gateStudents.length, scheduledAccounts, studentDataAvailable: true } })
+    const scannedStudents = gateStudents.length
+    const notScannedStudents = Math.max(0, students - scannedStudents)
+    res.json({
+      overview: {
+        accounts,
+        students,
+        attendance,
+        scannedStudents,
+        notScannedStudents,
+        lateStudents,
+        scheduledAccounts,
+        readers,
+        recentGateLogs,
+        studentDataAvailable: true,
+      },
+    })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021') {
-      res.json({ overview: { accounts, students: null, attendance: null, scheduledAccounts, studentDataAvailable: false } })
+      res.json({ overview: { accounts, students: null, attendance: null, scannedStudents: null, notScannedStudents: null, lateStudents: null, scheduledAccounts, readers, recentGateLogs: [], studentDataAvailable: false } })
       return
     }
     throw error
@@ -308,7 +336,7 @@ export const replaceAccountSchedule = async (req: Request, res: Response): Promi
   res.json({ success: true, schedule: scheduleData })
 }
 
-const ACCOUNT_ROLES = ['USER', 'ADMIN'] as const
+const ACCOUNT_ROLES = ['USER', 'TEACHER', 'ADMIN'] as const
 type AccountRole = (typeof ACCOUNT_ROLES)[number]
 
 /**
@@ -334,7 +362,7 @@ type AccountRole = (typeof ACCOUNT_ROLES)[number]
  *             properties:
  *               role:
  *                 type: string
- *                 enum: [USER, ADMIN]
+ *                 enum: [USER, TEACHER, ADMIN]
  *     responses:
  *       200:
  *         description: Role updated
@@ -475,6 +503,7 @@ export const getStudents = async (req: Request, res: Response): Promise<void> =>
         studentId: true,
         firstName: true,
         lastName: true,
+        classSection: true,
         uid_card: true,
         createdAt: true,
         _count: { select: { gateLogs: true, roomLogs: true } },
@@ -488,6 +517,76 @@ export const getStudents = async (req: Request, res: Response): Promise<void> =>
       return
     }
     throw error
+  }
+}
+
+export const updateStudent = async (req: Request, res: Response): Promise<void> => {
+  if (!requireAdmin(req, res)) return
+
+  const { studentId: id } = req.params as Record<string, string>
+  const { firstName, lastName, studentId, classSection } = req.body as { firstName?: string; lastName?: string; studentId?: string; classSection?: string }
+  const trimmedFirstName = firstName?.trim()
+  const trimmedLastName = lastName?.trim()
+  const trimmedStudentId = studentId?.trim()
+  const trimmedClassSection = classSection?.trim() || null
+
+  if (!trimmedFirstName || !trimmedLastName || !trimmedStudentId) {
+    res.status(400).json({ error: 'Missing data about student' })
+    return
+  }
+  if (!/^\d+$/.test(trimmedStudentId)) {
+    res.status(400).json({ error: 'Student ID must be numeric' })
+    return
+  }
+
+  try {
+    const existing = await prisma.student.findUnique({ where: { studentId: trimmedStudentId }, select: { id: true } })
+    if (existing && existing.id !== id) {
+      res.status(409).json({ error: 'Student ID already in use' })
+      return
+    }
+
+    const student = await prisma.student.update({
+      where: { id },
+      data: { firstName: trimmedFirstName, lastName: trimmedLastName, studentId: trimmedStudentId, classSection: trimmedClassSection },
+      select: {
+        id: true,
+        studentId: true,
+        firstName: true,
+        lastName: true,
+        classSection: true,
+        uid_card: true,
+        createdAt: true,
+        _count: { select: { gateLogs: true, roomLogs: true } },
+      },
+    })
+    res.json(student)
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      res.status(404).json({ error: 'Student not found' })
+      return
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      res.status(409).json({ error: 'Student ID already in use' })
+      return
+    }
+    res.status(500).json({ error: 'Internal error' })
+  }
+}
+
+export const deleteStudent = async (req: Request, res: Response): Promise<void> => {
+  if (!requireAdmin(req, res)) return
+
+  const { studentId } = req.params as Record<string, string>
+  try {
+    await prisma.student.delete({ where: { id: studentId } })
+    res.json({ success: true })
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      res.status(404).json({ error: 'Student not found' })
+      return
+    }
+    res.status(500).json({ error: 'Internal error' })
   }
 }
 

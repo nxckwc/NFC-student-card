@@ -1,0 +1,1 @@
+-- No schema changes. This migration records the database seed command attempt.
