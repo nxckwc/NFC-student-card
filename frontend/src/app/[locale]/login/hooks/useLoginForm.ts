@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import axios from "axios";
-
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3100").replace(/\/+$/, "");
+import { API_BASE_URL } from "@/config/env";
 type AuthMode = "login" | "signup";
 
 

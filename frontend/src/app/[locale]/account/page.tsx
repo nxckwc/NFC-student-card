@@ -5,8 +5,7 @@ import axios from "axios"
 import { useLocale, useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { AlertCircle, Check, LogOut, ShieldCheck } from "lucide-react"
-
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3100").replace(/\/+$/, "")
+import { API_BASE_URL } from "@/config/env"
 
 type SessionUser = { id: number; username: string; role: string }
 

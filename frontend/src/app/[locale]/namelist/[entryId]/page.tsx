@@ -7,8 +7,7 @@ import { useTranslations } from 'next-intl'
 import { ArrowLeft, Circle, Wifi, WifiOff } from 'lucide-react'
 import { EmptyState, ErrorState } from '../../admin/components/AdminShell'
 import { fetchNamelist, setNamelistStudentStatus, type NamelistData, type StudentStatus } from '../../admin/lib/api'
-
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100').replace(/\/+$/, '')
+import { API_BASE_URL } from '@/config/env'
 
 const STATUS_ORDER: StudentStatus[] = ['PRESENT', 'LATE', 'ABSENT']
 

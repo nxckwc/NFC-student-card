@@ -9,6 +9,7 @@ import { getSchedule } from './src/controllers/schedule.js'
 import { createReader, deleteAccount, deleteStudent, getAccount, getAccounts, getAdminOverview, getAttendance, getReaders, getSchoolSettings, getStudents, replaceAccountSchedule, updateAccountRole, updateReader, updateSchoolSettings, updateStudent } from './src/controllers/admin.js'
 import { lookupCard, scanReader } from './src/controllers/reader.js'
 import { getNamelist, namelistEvents, setStudentStatus } from './src/controllers/namelist.js'
+import { getReportStudents, getStudentReport } from './src/controllers/analytics.js'
 
 const app = express()
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3100
@@ -67,6 +68,10 @@ app.post('/auth/login', login)
 app.get('/auth/session', session)
 app.patch('/auth/profile', updateProfile)
 app.post('/auth/logout', logout)
+
+app.get('/analytics/students', getReportStudents)
+app.get('/analytics/reports/student/:studentId', getStudentReport)
+app.get('/analytics/reports/student/:studentId/:format', getStudentReport)
 
 app.get('/dashboard/schedule', getSchedule)
 app.get('/dashboard/namelist/:entryId', getNamelist)

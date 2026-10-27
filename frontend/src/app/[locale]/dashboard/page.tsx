@@ -11,8 +11,7 @@ import {
   PersonAccounts24Filled,
 } from '@fluentui/react-icons'
 import { AlertCircle, ArrowUpRight, CalendarDays, Check, ChevronRight, Clock3, MapPin, RefreshCw, Sparkles } from 'lucide-react'
-
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100').replace(/\/+$/, '')
+import { API_BASE_URL } from '@/config/env'
 
 const days = [1, 2, 3, 4, 5, 6, 7]
 
