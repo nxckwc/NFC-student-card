@@ -1,6 +1,7 @@
 import axios from 'axios'
+import { API_BASE_URL } from '@/config/env'
 
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100').replace(/\/+$/, '')
+export { API_BASE_URL }
 
 export interface Account {
   id: number

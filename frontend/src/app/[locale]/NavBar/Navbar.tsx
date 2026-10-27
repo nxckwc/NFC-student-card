@@ -7,8 +7,7 @@ import Image from 'next/image';
 import axios from 'axios';
 import { CalendarDays, ChartNoAxesColumn, Languages, LayoutDashboard, UserCog, UserRound } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
-
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100').replace(/\/+$/, '');
+import { API_BASE_URL } from '@/config/env';
 
 const Navbar = () => {
   const pathname = usePathname();

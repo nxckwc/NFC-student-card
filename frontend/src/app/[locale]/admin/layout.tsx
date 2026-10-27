@@ -4,8 +4,7 @@ import { useState } from 'react'
 import axios from 'axios'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { AdminSidebar, AdminMobileNav } from './components/Sidebar'
-
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100').replace(/\/+$/, '')
+import { API_BASE_URL } from '@/config/env'
 
 interface SessionResponse {
   user: { id: number; username: string; role: string }

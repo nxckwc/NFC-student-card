@@ -5,8 +5,8 @@ import axios from 'axios'
 import { useLocale, useTranslations } from 'next-intl'
 import { FileChartColumn, LoaderCircle, Printer, RefreshCw } from 'lucide-react'
 import type { AttendanceReport, ReportKind, ReportStudent } from './types'
+import { API_BASE_URL } from '@/config/env'
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100').replace(/\/+$/, '')
 const inputClass = 'mt-2 w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20'
 
 function localDate(date: Date): string {

@@ -5,8 +5,8 @@ import axios from 'axios'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { useLocale, useTranslations } from 'next-intl'
 import { AlertCircle, MapPin, RefreshCw } from 'lucide-react'
+import { API_BASE_URL } from '@/config/env'
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100').replace(/\/+$/, '')
 const days = [1, 2, 3, 4, 5, 6, 7]
 const periods = [1, 2, 3, 4, 5, 6, 7, 8]
 

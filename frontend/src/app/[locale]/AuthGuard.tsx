@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { usePathname, useRouter } from "next/navigation";
-
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3100").replace(/\/+$/, "");
+import { API_BASE_URL } from "@/config/env";
 
 interface AuthGuardProps {
   locale: string;
