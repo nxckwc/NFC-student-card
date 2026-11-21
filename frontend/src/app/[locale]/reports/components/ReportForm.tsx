@@ -3,6 +3,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useTranslations } from 'next-intl'
 import { FileChartColumn, LoaderCircle } from 'lucide-react'
+import DatePicker from '@/components/DatePicker'
 import type { GenerateRequest, ReportKind, ReportStudent, ReportType } from '@/lib/reports/types'
 
 const inputClass = 'mt-2 w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20'
@@ -90,8 +91,8 @@ export default function ReportForm({ students, defaultStart, defaultEnd, busy, o
       )}
       {type === 'arrival' && classSelect(true)}
 
-      <label className="text-sm font-semibold text-text-secondary">{t('start')}<input required type="date" value={start} onChange={(event) => setStart(event.target.value)} max={end || undefined} className={inputClass} /></label>
-      <label className="text-sm font-semibold text-text-secondary">{t('end')}<input required type="date" value={end} onChange={(event) => setEnd(event.target.value)} min={start || undefined} className={inputClass} /></label>
+      <DatePicker label={t('start')} value={start} onChange={setStart} max={end || undefined} today={defaultEnd} />
+      <DatePicker label={t('end')} value={end} onChange={setEnd} min={start || undefined} today={defaultEnd} />
       <button disabled={!ready || busy} type="submit" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">
         {busy ? <LoaderCircle className="size-4 animate-spin" /> : <FileChartColumn className="size-4" />}{t(busy ? 'generating' : 'generate')}
       </button>

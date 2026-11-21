@@ -398,6 +398,11 @@
     },
     "success": "PP-ROBOTICS"
   },
+  "datePicker": {
+    "choose": "เลือกวันที่",
+    "previousMonth": "เดือนก่อนหน้า",
+    "nextMonth": "เดือนถัดไป"
+  },
   "reports": {
     "title": "รายงานการเข้าเรียน",
     "print": "พิมพ์",

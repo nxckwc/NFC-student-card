@@ -352,6 +352,11 @@
     },
     "success": "PP-ROBOTICS"
   },
+  "datePicker": {
+    "choose": "Choose a date",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month"
+  },
   "reports": {
     "title": "Attendance reports",
     "print": "Print",
