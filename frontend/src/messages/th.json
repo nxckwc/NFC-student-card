@@ -401,7 +401,9 @@
   "datePicker": {
     "choose": "เลือกวันที่",
     "previousMonth": "เดือนก่อนหน้า",
-    "nextMonth": "เดือนถัดไป"
+    "nextMonth": "เดือนถัดไป",
+    "previousYear": "ปีก่อนหน้า",
+    "nextYear": "ปีถัดไป"
   },
   "reports": {
     "title": "รายงานการเข้าเรียน",

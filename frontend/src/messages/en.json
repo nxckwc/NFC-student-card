@@ -355,7 +355,9 @@
   "datePicker": {
     "choose": "Choose a date",
     "previousMonth": "Previous month",
-    "nextMonth": "Next month"
+    "nextMonth": "Next month",
+    "previousYear": "Previous year",
+    "nextYear": "Next year"
   },
   "reports": {
     "title": "Attendance reports",

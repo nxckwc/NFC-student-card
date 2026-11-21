@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { addDays, addMonths, clampDay, endOfMonth, localDay, monthGrid, parseDay, startOfMonth, startOfWeek } from '@/lib/dates'
 
 const POPOVER_WIDTH = 288 // w-72
@@ -111,8 +111,9 @@ export default function DatePicker({ label, value, onChange, min, max, today, we
   const days = open ? monthGrid(cursor, weekStart) : []
   const weeks = Array.from({ length: 6 }, (_, index) => days.slice(index * 7, index * 7 + 7))
   const monthLabel = open ? format('month', cursor) : ''
-  const prevDisabled = open && Boolean(min) && addDays(startOfMonth(cursor), -1) < (min as string)
-  const nextDisabled = open && Boolean(max) && addDays(endOfMonth(cursor), 1) > (max as string)
+  // A button is off when the month it would show lies entirely outside [min, max].
+  const monthOutOfRange = (day: string) => Boolean((min && endOfMonth(day) < min) || (max && startOfMonth(day) > max))
+  const off = (months: number) => open && monthOutOfRange(addMonths(cursor, months))
   const valueText = selected ? format('value', selected) : t('choose')
 
   return (
@@ -151,9 +152,15 @@ export default function DatePicker({ label, value, onChange, min, max, today, we
             className={`absolute top-full z-50 mt-2 w-72 max-w-[calc(100vw-1rem)] rounded-xl border border-border bg-surface p-3 font-normal text-text-primary shadow-lg outline-none ${alignRight ? 'right-0' : 'left-0'}`}
           >
             <div className="flex items-center justify-between">
-              <button type="button" aria-label={t('previousMonth')} disabled={prevDisabled} onClick={() => shiftMonth(-1)} className={navClass}><ChevronLeft className="size-4" /></button>
+              <div className="flex">
+                <button type="button" aria-label={t('previousYear')} disabled={off(-12)} onClick={() => shiftMonth(-12)} className={navClass}><ChevronsLeft className="size-4" /></button>
+                <button type="button" aria-label={t('previousMonth')} disabled={off(-1)} onClick={() => shiftMonth(-1)} className={navClass}><ChevronLeft className="size-4" /></button>
+              </div>
               <p aria-live="polite" className="text-sm font-bold">{monthLabel}</p>
-              <button type="button" aria-label={t('nextMonth')} disabled={nextDisabled} onClick={() => shiftMonth(1)} className={navClass}><ChevronRight className="size-4" /></button>
+              <div className="flex">
+                <button type="button" aria-label={t('nextMonth')} disabled={off(1)} onClick={() => shiftMonth(1)} className={navClass}><ChevronRight className="size-4" /></button>
+                <button type="button" aria-label={t('nextYear')} disabled={off(12)} onClick={() => shiftMonth(12)} className={navClass}><ChevronsRight className="size-4" /></button>
+              </div>
             </div>
 
             <div role="grid" aria-label={monthLabel} onKeyDown={onGridKeyDown} className="mt-2">
