@@ -133,3 +133,28 @@ model RoomLog {
   @@unique([studentId, roomId, subject, period, date])
   @@index([date])
 }
+
+/// Singleton (id = 1) of counters deciding whether cached report snapshots are still
+/// valid. `attendance` moves on every attendance write and invalidates provisional
+/// reports; `corrections` moves on student edits/deletes and school-settings changes
+/// and invalidates every snapshot, finalized ones included.
+model ReportDataVersion {
+  id          Int @id @default(1)
+  attendance  Int @default(0)
+  corrections Int @default(0)
+}
+
+/// Shared, computed report keyed by a hash of report type, canonical parameters and
+/// date range. Reused across authorized staff; per-teacher report lists live in the
+/// browser, not here.
+model ReportSnapshot {
+  key                String   @id
+  type               String
+  endDate            String
+  status             String
+  attendanceVersion  Int
+  correctionsVersion Int
+  payload            Json
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}

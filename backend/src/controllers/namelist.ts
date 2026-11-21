@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express'
 import { prisma } from '../lib/prisma.js'
+import { noteAttendanceChange } from '../lib/reportCache.js'
 import { publishEntryStatus, subscribeToEntry, type StudentStatus } from '../lib/realtime.js'
 import { requireStaff } from '../utils/auth.js'
 
@@ -101,6 +102,7 @@ export const setStudentStatus = async (req: Request, res: Response): Promise<voi
     })
     presentAt = log.presentAt
   }
+  await noteAttendanceChange()
 
   publishEntryStatus(entry.id, { type: 'status', studentId, status, ...(presentAt ? { presentAt: presentAt.toISOString() } : {}) })
   res.json({ studentId, status, presentAt: presentAt?.toISOString() ?? null })

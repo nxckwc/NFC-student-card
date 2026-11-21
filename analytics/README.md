@@ -31,6 +31,18 @@ The service reads `backend/.env`, without overriding existing environment variab
 
 Set the same `ANALYTICS_SERVICE_TOKEN` in both services, or leave it unset to use `JWT_SECRET`. Every report request to FastAPI requires this token in `X-Analytics-Token`; it stays on the server. Configure Express's `ANALYTICS_URL` if the service runs at a different address.
 
+## Class, subject and arrival reports
+
+Besides the student report, the service builds reports for whole classes. Express calls these after authorizing the staff member and resolving the class scope; each takes `start` and `end` (`YYYY-MM-DD`, fewer than 366 days apart) like the student report.
+
+| Route | Parameters | Result |
+| --- | --- | --- |
+| `GET /analytics/reports/class` | `className` | Gate and classroom counts per student in the class, plus totals. |
+| `GET /analytics/reports/subject` | `className`, `subject` | Present, late, and no-record sessions per student for one subject. A session is a date and period with at least one record, because absences are not stored. |
+| `GET /analytics/reports/arrival` | `classes` (repeat; omit for the whole school) | Late counts and average and latest first-arrival times per student, plus a per-day breakdown. |
+
+Responses are stored by Express as shared snapshots; see [Report caching](../README.md#report-caching).
+
 ## Reports
 
 Open `/en/reports` or `/th/reports` in the web application. Select a student, a date range, and gate/classroom/combined attendance. Generate the report and use **Print** for a clean printable version.
@@ -63,8 +75,10 @@ Administrators can select all students. Teachers can select students whose curre
 Rule tests run without a live database:
 
 ```sh
-python -m unittest -v test_reports.ReportRulesTest
+python -m unittest -v test_reports.ReportRulesTest test_report_builders
 ```
+
+`test_report_builders` covers the lateness rule and the class, subject, and arrival summaries.
 
 For database and API integration tests, use a **separate disposable database whose name ends in `_test`**. Apply the backend's Prisma migrations to it first, then:
 

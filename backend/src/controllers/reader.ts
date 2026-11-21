@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma.js'
+import { noteAttendanceChange } from '../lib/reportCache.js'
 import { getAuthTokenFromCookies } from '../utils/cookie.js'
 import type { JwtPayload } from '../interfaces/auth.js'
 import { publishEntryStatus } from '../lib/realtime.js'
@@ -114,6 +115,7 @@ const scanGate = async (readerId: string, studentId: string, now: Date) => {
     return { log, action: 'IN' as const, created: false }
   })
 
+  await noteAttendanceChange()
   return result
 }
 
@@ -146,6 +148,7 @@ const scanRoom = async (readerId: string, studentId: string, now: Date) => {
 
   try {
     const log = await prisma.roomLog.create({ data: { studentId, readerId, date, weekday: entry.weekday, period: entry.period, subject: entry.subject, className: entry.className, roomId: entry.roomId, status, presentAt: now } })
+    await noteAttendanceChange()
     publishEntryStatus(entry.id, { type: 'status', studentId, status, presentAt: log.presentAt.toISOString() })
     return { log, created: true, entry }
   } catch (error) {

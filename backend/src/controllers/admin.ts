@@ -3,6 +3,7 @@ import crypto from 'node:crypto'
 import jwt from 'jsonwebtoken'
 import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma.js'
+import { noteCorrection } from '../lib/reportCache.js'
 import { getAuthTokenFromCookies } from '../utils/cookie.js'
 import type { JwtPayload } from '../interfaces/auth.js'
 
@@ -560,6 +561,7 @@ export const updateStudent = async (req: Request, res: Response): Promise<void> 
         _count: { select: { gateLogs: true, roomLogs: true } },
       },
     })
+    await noteCorrection()
     res.json(student)
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
@@ -580,6 +582,7 @@ export const deleteStudent = async (req: Request, res: Response): Promise<void> 
   const { studentId } = req.params as Record<string, string>
   try {
     await prisma.student.delete({ where: { id: studentId } })
+    await noteCorrection()
     res.json({ success: true })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
@@ -768,6 +771,7 @@ export const updateSchoolSettings = async (req: Request, res: Response): Promise
       update: { lateCutoff, ...(timezone !== undefined ? { timezone: timezone.trim() } : {}) },
       create: { id: 1, lateCutoff, ...(timezone !== undefined ? { timezone: timezone.trim() } : {}) },
     })
+    await noteCorrection()
     res.json({ settings })
   } catch {
     res.status(400).json({ message: 'Invalid timezone' })
