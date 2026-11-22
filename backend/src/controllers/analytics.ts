@@ -3,13 +3,19 @@ import type { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma.js'
 import { requireStaff } from '../utils/auth.js'
 
-// Teachers can report on students in their assigned classes; admins can use all students.
-const studentScope = async (user: { id: number; role: string }): Promise<Prisma.StudentWhereInput> => {
-  if (user.role === 'ADMIN') return {}
+// Classes a teacher may report on; null means unrestricted (admins).
+export const assignedClasses = async (user: { id: number; role: string }): Promise<string[] | null> => {
+  if (user.role === 'ADMIN') return null
   const entries = await prisma.scheduleEntry.findMany({
     where: { userId: user.id }, select: { className: true }, distinct: ['className'],
   })
-  return { classSection: { in: entries.map((entry) => entry.className) } }
+  return entries.map((entry) => entry.className)
+}
+
+// Teachers can report on students in their assigned classes; admins can use all students.
+export const studentScope = async (user: { id: number; role: string }): Promise<Prisma.StudentWhereInput> => {
+  const classes = await assignedClasses(user)
+  return classes ? { classSection: { in: classes } } : {}
 }
 
 export const getReportStudents = async (req: Request, res: Response): Promise<void> => {

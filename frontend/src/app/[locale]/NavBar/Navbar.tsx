@@ -14,7 +14,7 @@ const Navbar = () => {
   const isLoginRoute = pathname.endsWith('/login');
   const isDashboardRoute = pathname.endsWith('/dashboard');
   const isScheduleRoute = pathname.endsWith('/schedule');
-  const isReportsRoute = pathname.endsWith('/reports');
+  const isReportsRoute = /\/reports(\/|$)/.test(pathname);
   const isAccountRoute = pathname.endsWith('/account');
   const isAdminRoute = /^\/(en|th)\/admin/.test(pathname);
   const [isAdmin, setIsAdmin] = useState(false);

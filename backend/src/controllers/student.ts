@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 import crypto from 'node:crypto'
 import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma.js'
+import { noteAttendanceChange } from '../lib/reportCache.js'
 import type { CreateStudentRequestBody, RegisterCardRequestBody } from '../interfaces/student.js'
 
 const isNumericId = (value: string): boolean => /^\d+$/.test(value)
@@ -79,6 +80,7 @@ export const createStudent = async (req: Request, res: Response): Promise<void> 
         classSection: classSection?.trim() || null
       }
     })
+    await noteAttendanceChange()
     res.status(201).json(student)
   } catch {
     res.status(500).json({ error: 'Internal error' })

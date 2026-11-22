@@ -10,6 +10,7 @@ import { createReader, deleteAccount, deleteStudent, getAccount, getAccounts, ge
 import { lookupCard, scanReader } from './src/controllers/reader.js'
 import { getNamelist, namelistEvents, setStudentStatus } from './src/controllers/namelist.js'
 import { getReportStudents, getStudentReport } from './src/controllers/analytics.js'
+import { generateReport, getReportVersion } from './src/controllers/reports.js'
 
 const app = express()
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3100
@@ -70,6 +71,8 @@ app.patch('/auth/profile', updateProfile)
 app.post('/auth/logout', logout)
 
 app.get('/analytics/students', getReportStudents)
+app.get('/analytics/reports/version', getReportVersion)
+app.post('/analytics/reports', generateReport)
 app.get('/analytics/reports/student/:studentId', getStudentReport)
 app.get('/analytics/reports/student/:studentId/:format', getStudentReport)
 

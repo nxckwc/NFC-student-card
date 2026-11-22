@@ -16,7 +16,7 @@ The core application is a Next.js frontend and an Express API backed by PostgreS
 | Teacher dashboard | View daily and weekly schedules, open class lists, and mark students present, late, or absent. Class lists receive live updates through Server-Sent Events (SSE). |
 | Administration | Manage account roles, teacher schedules, readers, reader assignments, school settings, and attendance activity. |
 | Reader testing | Simulate taps, look up cards, and register cards from the admin interface. |
-| Reports | Generate student gate, classroom, or combined reports for a date range, view summaries and history, and print the result. |
+| Reports | Generate student, class, subject, or arrival reports for a date range. Each one is saved as a card in your browser, reopens from its stored snapshot, and can be printed from the viewer. |
 | Interface | English and Thai locale routes, responsive layouts, and light/dark themes. |
 
 Accounts use the `USER`, `TEACHER`, and `ADMIN` roles. New registrations receive `USER`; an administrator can assign staff roles. Student records are separate from login accounts. Authentication uses bcrypt password hashes and JWTs stored in an HTTP-only cookie.
@@ -128,7 +128,7 @@ In another terminal, from `backend`:
 docker compose up --build -d analytics
 ```
 
-The analytics service connects to the same Compose database and is available to the host API at `http://127.0.0.1:8000`. Open **Reports** in the navigation, select a student, attendance type, and date range, then choose **Generate report**. The **Print** button prints the generated report without navigation or filters.
+The analytics service connects to the same Compose database and is available to the host API at `http://127.0.0.1:8000`. Open **Reports** in the navigation, choose a report type (student, class, subject, or arrival), set its parameters and a date range, then choose **Generate report**. The report is saved as a card under **Generated reports** and opens in the viewer, where **Print** prints it without navigation or filters. See [Report caching](#report-caching).
 
 Administrators can report on all students; teachers can report on students in their currently assigned classes. Reports accept up to 366 days. For a Python-only setup or a database outside Compose, see the [analytics setup guide](analytics/README.md).
 
@@ -198,6 +198,8 @@ The route definitions in [`backend/index.ts`](backend/index.ts) are the complete
 | `/auth/*` | Registration, login, session lookup, profile updates, and logout. |
 | `/dashboard/schedule` | The signed-in account's timetable. |
 | `GET /analytics/students` | Students available for the signed-in staff member's reports. |
+| `POST /analytics/reports` | Generate a `student`, `class`, `subject`, or `arrival` report from `{ type, start, end, … }`. Authorization runs on every request; the response includes a `meta` block with the cache key, `FINALIZED`/`PROVISIONAL` status, and whether it was a shared-cache `hit` or `miss`. |
+| `GET /analytics/reports/version` | Current report data version and the school's calendar date, used to check whether a saved provisional report is still fresh. |
 | `GET /analytics/reports/student/:studentId` | Student metadata, summary, and history. Accepts `start`/`end` (`YYYY-MM-DD`, inclusive) and `kind` (`all`, `gate`, `room`). Uses the student's internal UUID. Append `/history`, `/analysis`, or `/csv` for individual formats. |
 | `/dashboard/namelist/:entryId` | Today's class list, with student-status updates and an `/events` SSE stream. Requires a teacher assigned to the entry or an administrator. |
 | `/admin/*` | Account, student, reader, attendance, and school-settings administration. |
@@ -253,8 +255,26 @@ Run each command from the directory shown.
 | `backend` | `npm run db:migrate` | Create and apply migrations during schema development. |
 | `backend` | `npm run db:deploy` | Apply committed migrations. |
 | `backend` | `npm run db:studio` | Inspect database records with Prisma Studio. |
+| `backend` | `npm run test:rules` | Build, then run the report-cache rule tests (no database needed). |
+| `frontend` | `npm test` | Run the browser-side report freshness tests (no database needed). |
 
 For application changes, run the frontend lint and build commands and the backend build, then exercise the relevant workflow locally. Report tests cover PostgreSQL queries, date boundaries, lateness, CSV output, staff access, and the Express-to-analytics connection; see [analytics testing](analytics/README.md#testing) for the isolated test setup.
+
+### Report caching
+
+Reports are generated only when you choose **Generate report**. Two independent caches avoid recomputing them:
+
+- **Browser (per teacher):** each generated report is stored as a card in IndexedDB, keyed by the signed-in account, so there are no per-report records in the central database. Cards survive reloads, open from their stored snapshot, and are deleted one at a time. Nothing syncs between browsers.
+- **Shared (backend):** a `ReportSnapshot` row, keyed by a hash of the report type, canonical parameters (including the authorized class scope), and date range, lets one teacher's computation serve another's identical request. A cache hit never skips authorization: access is checked first on every request.
+
+A report is **finalized** when its end date is before the current school date (the school timezone, `Asia/Bangkok` by default, never the browser's) and **provisional** otherwise. Snapshots carry the `ReportDataVersion` counters they were computed under: `attendance` moves on every attendance write, and `corrections` moves on student edits or deletions and school-settings changes.
+
+| Snapshot | Reused while |
+| --- | --- |
+| Finalized | `corrections` is unchanged; ordinary attendance writes do not affect it. |
+| Provisional | Neither counter has changed and the end date is still today or later. Otherwise it is stale and can be refreshed from the viewer. |
+
+A finalized card reopens without contacting the report service. A provisional card makes one lightweight version check and shows a refresh prompt if newer data exists. Absences are not stored (marking a student absent removes the class-list row), so subject reports count recorded present and late sessions and show gaps as "no record".
 
 ### Troubleshooting
 
